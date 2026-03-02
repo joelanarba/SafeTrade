@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Script from 'next/script';
 import { getDeal } from '@/lib/firestore';
 import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
@@ -75,6 +76,12 @@ export default function PayPage() {
 
     if (!paystackKey) {
       toast.error('Payment configuration missing. Please contact support.');
+      setPaying(false);
+      return;
+    }
+
+    if (!window.PaystackPop) {
+      toast.error('Payment system is still initializing. Please try again in a few seconds.');
       setPaying(false);
       return;
     }
@@ -180,7 +187,7 @@ export default function PayPage() {
           <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-8 h-8 text-emerald-400" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Payment Secured! 🎉</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">Payment Secured!</h2>
           <p className="text-gray-400 mb-6">
             Your <strong className="text-white">GHS {deal.amountGHS.toFixed(2)}</strong> is now locked
             in a blockchain-secured escrow. The vendor has been notified to ship your item.
@@ -206,7 +213,7 @@ export default function PayPage() {
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-8">
       {/* Paystack Script */}
-      <script src="https://js.paystack.co/v1/inline.js" />
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
 
       <div className="max-w-lg mx-auto">
         {/* Header */}
