@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { getDealByConfirmationToken, getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
+import { BnbLogo } from '@/components/BnbChainBadge';
 import {
   CheckCircle,
   AlertTriangle,
@@ -13,6 +14,7 @@ import {
   Send,
   Shield,
   PartyPopper,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -145,10 +147,23 @@ export default function ConfirmPage() {
               href={`https://testnet.bscscan.com/tx/${deal.releaseTxHash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 py-3 rounded-xl font-bold transition-all"
+              className="inline-flex items-center gap-2.5 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-6 py-3.5 rounded-xl font-bold transition-all text-sm"
             >
-              <Shield className="w-5 h-5" />
-              View Blockchain Receipt
+              <BnbLogo className="w-5 h-5" />
+              View Release Transaction on BscScan
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+          {deal.escrowTxHash && !deal.releaseTxHash && (
+            <a
+              href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-6 py-3.5 rounded-xl font-bold transition-all text-sm mt-3"
+            >
+              <BnbLogo className="w-5 h-5" />
+              View Escrow Transaction on BscScan
+              <ExternalLink className="w-4 h-4" />
             </a>
           )}
         </div>
@@ -200,7 +215,7 @@ export default function ConfirmPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-2xl p-6 space-y-4 border border-slate-100">
+            <div className="bg-slate-50 rounded-2xl p-6 space-y-4 border border-slate-100">
             <div className="flex justify-between items-center text-lg">
               <span className="text-slate-500 font-bold">Amount Locked</span>
               <span className="text-slate-900 font-extrabold">₵{deal.amountGHS.toFixed(2)}</span>
@@ -216,6 +231,14 @@ export default function ConfirmPage() {
               <div className="scale-110 origin-right">
                 <StatusBadge status={deal.status} />
               </div>
+            </div>
+            <div className="border-t border-slate-200 my-2" />
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-bold text-lg">Escrow</span>
+              <span className="inline-flex items-center gap-1.5 text-[#C99400] font-bold text-sm bg-[#FEF9E7] px-3 py-1 rounded-full border border-[#F3BA2F]/20">
+                <BnbLogo className="w-3.5 h-3.5" />
+                BNB Smart Chain
+              </span>
             </div>
           </div>
         </div>

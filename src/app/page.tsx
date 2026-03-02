@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Shield, ArrowRight, Lock, CheckCircle, Banknote, TrendingUp, Users, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
 
 export default function Home() {
   const [dealCount, setDealCount] = useState(0);
@@ -34,9 +35,9 @@ export default function Home() {
         <div className={`max-w-6xl mx-auto text-center relative transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-10 shadow-sm hover-lift">
-            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full pulse-glow" />
-            <span className="text-emerald-700 text-sm font-bold tracking-wide">Blockchain-Secured Escrow</span>
+          <div className="inline-flex items-center gap-2 bg-[#FEF9E7] border border-[#F3BA2F]/30 rounded-full px-5 py-2 mb-10 shadow-sm hover-lift">
+            <BnbLogo className="w-4 h-4" />
+            <span className="text-[#C99400] text-sm font-bold tracking-wide">Secured by BNB Smart Chain</span>
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-slate-900 leading-[1.1] mb-8 tracking-tight">
@@ -197,6 +198,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Blockchain Trust Section */}
+      <BlockchainTrustSection />
+
       {/* Massive CTA */}
       <section className="relative px-4 py-32 sm:py-48 bg-white">
         <div className="max-w-5xl mx-auto text-center">
@@ -231,9 +235,15 @@ export default function Home() {
               © 2026 SafeTrade Ghana. All rights reserved.
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+          <a
+            href="https://testnet.bscscan.com/address/0x350454F23D259Ea42cE4D6D1Eb2b41207b8fAD32"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm hover:border-[#F3BA2F]/30 hover:bg-[#FEF9E7] hover:text-[#C99400] transition-all"
+          >
+            <BnbLogo className="w-4 h-4" />
             Powered by BNB Smart Chain
-          </p>
+          </a>
         </div>
       </footer>
     </div>

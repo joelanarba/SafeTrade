@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import TrustScore from '@/components/TrustScore';
+import { BnbLogo } from '@/components/BnbChainBadge';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
 import { Deal } from '@/lib/types';
 import {
@@ -244,9 +245,10 @@ function DashboardContent() {
                               href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline underline-offset-2"
+                              className="inline-flex items-center gap-1.5 text-[#C99400] hover:text-[#A67C00] hover:underline underline-offset-2 font-bold"
                             >
-                              Tx Hash <ExternalLink className="w-3.5 h-3.5" />
+                              <BnbLogo className="w-3.5 h-3.5" />
+                              BscScan <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </>
                         )}

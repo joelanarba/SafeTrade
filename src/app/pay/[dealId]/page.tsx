@@ -7,6 +7,7 @@ import { getDeal } from '@/lib/firestore';
 import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import TrustScore from '@/components/TrustScore';
+import { BnbPoweredBadge, BnbPoweredBlock, BnbLogo } from '@/components/BnbChainBadge';
 import {
   Shield,
   Lock,
@@ -18,6 +19,7 @@ import {
   Phone,
   User,
   Mail,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -191,7 +193,7 @@ export default function PayPage() {
             in a smart contract. The vendor has been notified to ship your item.
           </p>
           
-          <div className="bg-slate-50 rounded-2xl p-5 text-left space-y-3 mb-8 border border-slate-100">
+          <div className="bg-slate-50 rounded-2xl p-5 text-left space-y-3 mb-6 border border-slate-100">
             <div className="flex justify-between items-center text-base">
               <span className="text-slate-500 font-bold">Item</span>
               <span className="text-slate-900 font-extrabold">{deal.itemName}</span>
@@ -200,11 +202,31 @@ export default function PayPage() {
               <span className="text-slate-500 font-bold">Delivery Window</span>
               <span className="text-emerald-700 font-black bg-emerald-100 px-3 py-1 rounded-full text-sm">72 hours</span>
             </div>
+            <div className="flex justify-between items-center text-base">
+              <span className="text-slate-500 font-bold">Escrow</span>
+              <span className="inline-flex items-center gap-1.5 text-[#C99400] font-bold text-sm bg-[#FEF9E7] px-3 py-1 rounded-full border border-[#F3BA2F]/20">
+                <BnbLogo className="w-3.5 h-3.5" />
+                BNB Smart Chain
+              </span>
+            </div>
           </div>
           
-          <p className="text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl">
+          <p className="text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl mb-4">
             Check your email for a confirmation link to use when you receive your item.
           </p>
+
+          {deal.escrowTxHash && (
+            <a
+              href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-5 py-3 rounded-xl text-sm font-bold transition-all w-full justify-center"
+            >
+              <BnbLogo className="w-4 h-4" />
+              View Escrow Transaction on BscScan
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
       </div>
     );
@@ -217,10 +239,7 @@ export default function PayPage() {
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6 shadow-sm">
-            <Lock className="w-4 h-4 text-emerald-600" />
-            <span className="text-emerald-700 text-sm font-bold tracking-wide">Blockchain Escrow Protected</span>
-          </div>
+          <BnbPoweredBadge className="mb-6" />
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Secure Payment</h1>
         </div>
 
@@ -336,18 +355,22 @@ export default function PayPage() {
         </button>
 
         {/* Trust Section */}
+        {/* Trust Section with BNB branding */}
         <div className="mt-10 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-          <h3 className="text-base font-extrabold text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
-            <Shield className="w-5 h-5 text-emerald-600" />
-            How SafeTrade Protects You
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-3 tracking-tight">
+              <Shield className="w-5 h-5 text-emerald-600" />
+              How SafeTrade Protects You
+            </h3>
+            <BnbPoweredBlock />
+          </div>
           <div className="space-y-5">
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Lock className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 rounded-full bg-[#FEF9E7] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <BnbLogo className="w-4 h-4" />
               </div>
               <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                Your money is held in a blockchain smart contract — the vendor can't touch it until you confirm delivery.
+                Your money is held in a <strong className="text-slate-900">BNB Smart Chain smart contract</strong> — the vendor can't touch it until you confirm delivery.
               </p>
             </div>
             <div className="flex items-start gap-4">
@@ -359,8 +382,8 @@ export default function PayPage() {
               </p>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Shield className="w-4 h-4 text-amber-600" />
+              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Shield className="w-4 h-4 text-emerald-600" />
               </div>
               <p className="text-sm font-medium text-slate-600 leading-relaxed">
                 Full automatic refund if the vendor fails to deliver and the dispute is resolved in your favor.
