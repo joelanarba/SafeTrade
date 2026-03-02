@@ -91,16 +91,12 @@ export default function PayPage() {
       email: buyerEmail,
       amount: Math.round(deal.amountGHS * 100), // Convert to pesewas
       currency: 'GHS',
-      ref: `st_${dealId}_${Date.now()}`,
+      ref: Date.now().toString() + Math.random().toString(36).substring(7),
       metadata: {
         dealId: deal.id,
         buyerName,
         buyerPhone,
         buyerEmail,
-        custom_fields: [
-          { display_name: 'Deal', variable_name: 'deal_id', value: deal.id },
-          { display_name: 'Item', variable_name: 'item_name', value: deal.itemName },
-        ],
       },
       callback: function (response: { reference: string }) {
         // Payment successful
