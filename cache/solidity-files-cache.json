@@ -1,0 +1,40 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\dev\\Projects\\SafeTrade\\contracts\\EscrowFactory.sol": {
+      "lastModificationDate": 1772404662853,
+      "contentHash": "898d0ee7c8b8d66a84a781b3cb931e47",
+      "sourceName": "contracts/EscrowFactory.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "EscrowFactory"
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "safetrade-functions",
+  "description": "SafeTrade Ghana Firebase Cloud Functions",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "engines": {
+    "node": "18"
+  }
+}

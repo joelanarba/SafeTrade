@@ -1,0 +1,69 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "dealId", "type": "string" },
+      { "internalType": "address", "name": "vendorAddress", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "createEscrow",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "dealId", "type": "string" }
+    ],
+    "name": "release",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "dealId", "type": "string" }
+    ],
+    "name": "refund",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "dealId", "type": "string" }
+    ],
+    "name": "getEscrow",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "dealId", "type": "string" },
+          { "internalType": "address", "name": "vendorAddress", "type": "address" },
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "address", "name": "buyer", "type": "address" },
+          { "internalType": "bool", "name": "funded", "type": "bool" },
+          { "internalType": "bool", "name": "released", "type": "bool" },
+          { "internalType": "bool", "name": "refunded", "type": "bool" }
+        ],
+        "internalType": "struct EscrowFactory.Escrow",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
