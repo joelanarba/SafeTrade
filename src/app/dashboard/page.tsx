@@ -110,7 +110,7 @@ function DashboardContent() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              Welcome, {vendor?.displayName || 'Vendor'} 👋
+              Welcome, {vendor?.displayName || 'Vendor'}!
             </h1>
             <p className="text-gray-400 text-sm mt-1">Manage your deals and track payments</p>
           </div>

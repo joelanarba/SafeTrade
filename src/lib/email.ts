@@ -39,7 +39,7 @@ export async function sendPaymentConfirmation(
     `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #10B981, #059669); padding: 30px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: white; margin: 0;">🔒 SafeTrade Ghana</h1>
+        <h1 style="color: white; margin: 0;">[SECURE] SafeTrade Ghana</h1>
       </div>
       <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 12px 12px;">
         <h2>Payment Confirmed!</h2>
@@ -68,7 +68,7 @@ export async function sendVendorNotification(
     `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #10B981, #059669); padding: 30px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: white; margin: 0;">🔒 SafeTrade Ghana</h1>
+        <h1 style="color: white; margin: 0;">[SECURE] SafeTrade Ghana</h1>
       </div>
       <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 12px 12px;">
         <h2>New Order — Funds Secured! 🎉</h2>

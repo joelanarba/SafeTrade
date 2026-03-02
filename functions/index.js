@@ -24,7 +24,7 @@ const db = admin.firestore();
 exports.autoReleaseEscrows = functions.pubsub
   .schedule("every 1 hours")
   .onRun(async (context) => {
-    console.log("🔄 Running auto-release check...");
+    console.log("[SYNC] Running auto-release check...");
 
     const now = new Date();
     const cutoff = new Date(now.getTime() - 72 * 60 * 60 * 1000); // 72 hours ago
@@ -43,7 +43,7 @@ exports.autoReleaseEscrows = functions.pubsub
 
         if (createdAt < cutoff) {
           // 72 hours have passed with no dispute — auto-confirm
-          console.log(`⏰ Auto-releasing deal ${doc.id}: ${deal.itemName}`);
+          console.log(`[TIME] Auto-releasing deal ${doc.id}: ${deal.itemName}`);
 
           // Generate mock tx hash (replace with real escrow release)
           const releaseTxHash = `0x${"auto" + doc.id.replace(/-/g, "").substring(0, 60)}`;
@@ -77,10 +77,10 @@ exports.autoReleaseEscrows = functions.pubsub
         }
       }
 
-      console.log(`✅ Auto-released ${released} deal(s)`);
+      console.log(`[SUCCESS] Auto-released ${released} deal(s)`);
       return null;
     } catch (error) {
-      console.error("❌ Auto-release error:", error);
+      console.error("[ERROR] Auto-release error:", error);
       return null;
     }
   });
@@ -96,7 +96,7 @@ exports.onDealDisputed = functions.firestore
     const after = change.after.data();
 
     if (before.status !== "disputed" && after.status === "disputed") {
-      console.log(`🚨 Dispute raised for deal ${context.params.dealId}`);
+      console.log(`[ALERT] Dispute raised for deal ${context.params.dealId}`);
       console.log(`   Item: ${after.itemName}`);
       console.log(`   Reason: ${after.disputeReason}`);
       console.log(`   Vendor: ${after.vendorName}`);
@@ -116,6 +116,6 @@ exports.onDealDisputed = functions.firestore
 exports.onVendorCreated = functions.firestore
   .document("vendors/{vendorId}")
   .onCreate(async (snap, context) => {
-    console.log(`👤 New vendor registered: ${context.params.vendorId}`);
+    console.log(`[USER] New vendor registered: ${context.params.vendorId}`);
     return null;
   });

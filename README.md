@@ -1,4 +1,4 @@
-# SafeTrade Ghana 🔒
+# SafeTrade Ghana (Secure Escrow)
 
 > **Secure escrow for Ghana's social commerce market** — When someone buys from an Instagram/WhatsApp vendor, instead of sending MoMo directly (and risking a scam), they pay into a SafeTrade escrow. Funds are held until the buyer confirms delivery, then released to the vendor.
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 📋 Core Features
+## Core Features
 
 - **Vendor Deal Creation** — Create deals, get shareable payment links for Instagram/WhatsApp DMs
 - **Buyer Payment** — No account needed. Pay via Paystack (card or Mobile Money)
@@ -83,7 +83,7 @@ SafeTrade/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -123,7 +123,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 📦 Smart Contract Deployment
+## Smart Contract Deployment
 
 ### 1. Install Hardhat
 
@@ -160,7 +160,7 @@ ESCROW_CONTRACT_ADDRESS=0xYourDeployedAddress
 
 ---
 
-## 🔥 Firebase Setup
+## Firebase Setup
 
 ### 1. Create Firebase Project
 
@@ -201,7 +201,7 @@ firebase deploy --only functions
 
 ---
 
-## 💳 Paystack Configuration
+## Paystack Configuration
 
 1. Sign up at [paystack.com](https://paystack.com)
 2. Get test keys from Dashboard → Settings → API Keys
@@ -210,7 +210,7 @@ firebase deploy --only functions
 
 ---
 
-## 🔄 User Flows
+## User Flows
 
 ### Vendor → Create Deal → Share Link
 ```

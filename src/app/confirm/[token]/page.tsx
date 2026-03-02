@@ -133,7 +133,7 @@ export default function ConfirmPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
         <div className="text-center glass rounded-2xl p-8 max-w-md glow-emerald">
           <PartyPopper className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-3">Delivery Confirmed! 🎉</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">Delivery Confirmed!</h2>
           <p className="text-gray-400 mb-4">
             Funds have been released to <strong className="text-white">{deal.vendorName}</strong>.
             Thank you for using SafeTrade!
