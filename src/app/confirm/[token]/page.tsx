@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getDealByConfirmationToken, updateDeal, getVendor, updateVendor } from '@/lib/firestore';
+import { getDealByConfirmationToken, getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import {
@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Loader2,
   Package,
-  Camera,
   Send,
   Shield,
   PartyPopper,
@@ -56,7 +55,6 @@ export default function ConfirmPage() {
     if (!deal) return;
     setConfirming(true);
     try {
-      // Call the confirm API
       const res = await fetch('/api/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,19 +108,21 @@ export default function ConfirmPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
       </div>
     );
   }
 
   if (!deal) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Invalid Link</h2>
-          <p className="text-gray-400">This confirmation link is invalid or has expired.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-soft border border-slate-100">
+          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Invalid Link</h2>
+          <p className="text-slate-500 font-medium">This confirmation link is invalid or has expired.</p>
         </div>
       </div>
     );
@@ -130,23 +130,25 @@ export default function ConfirmPage() {
 
   if (confirmed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center glass rounded-2xl p-8 max-w-md glow-emerald">
-          <PartyPopper className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-3">Delivery Confirmed!</h2>
-          <p className="text-gray-400 mb-4">
-            Funds have been released to <strong className="text-white">{deal.vendorName}</strong>.
-            Thank you for using SafeTrade!
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-[0_20px_60px_-15px_rgba(16,185,129,0.2)] border border-emerald-100">
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 pulse-glow">
+            <PartyPopper className="w-10 h-10 text-emerald-600" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Delivery Confirmed!</h2>
+          <p className="text-slate-600 mb-8 text-lg font-medium leading-relaxed">
+            Funds have been successfully released to <strong className="text-slate-900 font-black">{deal.vendorName}</strong>.
+            Thank you for choosing safe commerce.
           </p>
           {deal.releaseTxHash && (
             <a
               href={`https://testnet.bscscan.com/tx/${deal.releaseTxHash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 text-sm"
+              className="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 py-3 rounded-xl font-bold transition-all"
             >
-              <Shield className="w-4 h-4" />
-              View blockchain receipt
+              <Shield className="w-5 h-5" />
+              View Blockchain Receipt
             </a>
           )}
         </div>
@@ -156,13 +158,15 @@ export default function ConfirmPage() {
 
   if (disputeSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center glass rounded-2xl p-8 max-w-md">
-          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-3">Dispute Submitted</h2>
-          <p className="text-gray-400">
-            Our team will review your dispute and respond within 48 hours. Your funds remain
-            locked in escrow until a resolution is reached.
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-[0_20px_60px_-15px_rgba(245,158,11,0.2)] border border-amber-100">
+          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Dispute Logged</h2>
+          <p className="text-slate-600 text-lg font-medium leading-relaxed bg-amber-50 p-6 rounded-2xl border border-amber-100">
+            Our team will review your case and respond within 48 hours. Your funds remain securely
+            locked in the escrow contract.
           </p>
         </div>
       </div>
@@ -170,111 +174,119 @@ export default function ConfirmPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-16 sm:py-24">
+      <div className="max-w-xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white">Confirm Delivery</h1>
-          <p className="text-gray-400 text-sm mt-2">
-            Did you receive your item from {deal.vendorName}?
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-5 py-2 mb-6 shadow-sm">
+            <Package className="w-4 h-4 text-blue-600" />
+            <span className="text-blue-700 text-sm font-bold tracking-wide">Pending Confirmation</span>
+          </div>
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Got Your Item?</h1>
+          <p className="text-slate-500 text-lg font-medium mt-4">
+            Did you receive your order exactly as described from <strong className="text-slate-900">{deal.vendorName}</strong>?
           </p>
         </div>
 
         {/* Deal Summary */}
-        <div className="glass rounded-2xl p-6 mb-6">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Package className="w-6 h-6 text-emerald-400" />
+        <div className="bg-white rounded-[2rem] p-8 sm:p-10 mb-8 shadow-soft border border-slate-100">
+          <div className="flex items-start gap-5 mb-8">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Package className="w-8 h-8 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-bold text-white">{deal.itemName}</h2>
-              <p className="text-sm text-gray-400 mt-1">{deal.description}</p>
+              <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">{deal.itemName}</h2>
+              <p className="text-base font-medium text-slate-500 mt-2 leading-relaxed">{deal.description}</p>
             </div>
           </div>
 
-          <div className="bg-white/5 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Amount</span>
-              <span className="text-white font-semibold">₵{deal.amountGHS.toFixed(2)}</span>
+          <div className="bg-slate-50 rounded-2xl p-6 space-y-4 border border-slate-100">
+            <div className="flex justify-between items-center text-lg">
+              <span className="text-slate-500 font-bold">Amount Locked</span>
+              <span className="text-slate-900 font-extrabold">₵{deal.amountGHS.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Vendor</span>
-              <span className="text-white">{deal.vendorName}</span>
+            <div className="border-t border-slate-200 my-2" />
+            <div className="flex justify-between items-center text-lg">
+              <span className="text-slate-500 font-bold">Vendor</span>
+              <span className="text-slate-900 font-extrabold">{deal.vendorName}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Status</span>
-              <StatusBadge status={deal.status} />
+            <div className="border-t border-slate-200 my-2" />
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-bold text-lg">Status</span>
+              <div className="scale-110 origin-right">
+                <StatusBadge status={deal.status} />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
         {!showDispute ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <button
               onClick={handleConfirm}
               disabled={confirming}
-              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
             >
               {confirming ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Confirming...
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  Releasing Funds...
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5" />
-                  Yes, I Received My Item
+                  <CheckCircle className="w-6 h-6" />
+                  Yes, I Received My Order
                 </>
               )}
             </button>
 
             <button
               onClick={() => setShowDispute(true)}
-              className="w-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white py-4 rounded-xl font-medium text-sm transition-all border border-white/5 flex items-center justify-center gap-2"
+              className="w-full bg-white hover:bg-slate-50 text-slate-700 py-5 rounded-2xl font-bold text-lg transition-all border-2 border-slate-200 shadow-sm hover-lift flex items-center justify-center gap-3 tracking-tight"
             >
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              There&apos;s a Problem
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              No, There's a Problem
             </button>
           </div>
         ) : (
           // Dispute Form
-          <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-1">Report a Problem</h3>
-            <p className="text-sm text-gray-400 mb-4">
-              Describe the issue and we&apos;ll review it within 48 hours
+          <div className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-soft border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <h3 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">Report an Issue</h3>
+            <p className="text-base font-medium text-slate-500 mb-8">
+              Describe why you haven't received what was promised. Your funds will remain safe.
             </p>
 
-            <form onSubmit={handleDispute} className="space-y-4">
+            <form onSubmit={handleDispute} className="space-y-6">
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">What happened?</label>
+                <label className="block text-sm font-bold text-slate-700 mb-3">What happened?</label>
                 <textarea
                   value={disputeReason}
                   onChange={(e) => setDisputeReason(e.target.value)}
                   required
                   rows={4}
-                  placeholder="Describe the issue — e.g. item not received, wrong item, damaged..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 resize-none"
+                  placeholder="e.g. The item never arrived, wrong color, damaged package..."
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 font-medium transition-all resize-none"
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   type="button"
                   onClick={() => setShowDispute(false)}
-                  className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-3 rounded-xl text-sm transition-all"
+                  className="flex-1 bg-white hover:bg-slate-50 text-slate-600 border-2 border-slate-200 py-4 rounded-xl font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingDispute || !disputeReason}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[2] bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-extrabold transition-all shadow-md hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submittingDispute ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="w-5 h-5" />
                   )}
                   Submit Dispute
                 </button>

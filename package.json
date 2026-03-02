@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@heroicons/react": "^2.2.0",
     "ethers": "^6.16.0",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",

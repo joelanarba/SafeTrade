@@ -71,7 +71,6 @@ export default function PayPage() {
 
     setPaying(true);
 
-    // Use Paystack Inline
     const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
     if (!paystackKey) {
@@ -89,7 +88,7 @@ export default function PayPage() {
     const handler = window.PaystackPop.setup({
       key: paystackKey,
       email: buyerEmail,
-      amount: Math.round(deal.amountGHS * 100), // Convert to pesewas
+      amount: Math.round(deal.amountGHS * 100),
       currency: 'GHS',
       ref: Date.now().toString() + Math.random().toString(36).substring(7),
       metadata: {
@@ -99,7 +98,6 @@ export default function PayPage() {
         buyerEmail,
       },
       callback: function (response: { reference: string }) {
-        // Payment successful
         verifyPayment(response.reference);
       },
       onClose: function () {
@@ -146,19 +144,21 @@ export default function PayPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
       </div>
     );
   }
 
   if (!deal) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Deal Not Found</h2>
-          <p className="text-gray-400">This payment link may be invalid or expired.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white p-10 rounded-3xl shadow-soft border border-slate-100 max-w-md w-full">
+          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Deal Not Found</h2>
+          <p className="text-slate-500 font-medium">This payment link may be invalid or expired.</p>
         </div>
       </div>
     );
@@ -166,11 +166,13 @@ export default function PayPage() {
 
   if (deal.status !== 'pending_payment' && !paid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center glass rounded-2xl p-8 max-w-md">
-          <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Payment Already Made</h2>
-          <p className="text-gray-400">This deal has already been paid for. The funds are in escrow.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-soft border border-slate-100">
+          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Payment Secured</h2>
+          <p className="text-slate-500 font-medium">This deal has already been paid for. The funds are safely in escrow.</p>
         </div>
       </div>
     );
@@ -178,27 +180,29 @@ export default function PayPage() {
 
   if (paid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-        <div className="text-center glass rounded-2xl p-8 max-w-md glow-emerald">
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-emerald-400" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-[0_20px_60px_-15px_rgba(16,185,129,0.2)] border border-emerald-100">
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 pulse-glow">
+            <CheckCircle className="w-10 h-10 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Payment Secured!</h2>
-          <p className="text-gray-400 mb-6">
-            Your <strong className="text-white">GHS {deal.amountGHS.toFixed(2)}</strong> is now locked
-            in a blockchain-secured escrow. The vendor has been notified to ship your item.
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Payment Secured!</h2>
+          <p className="text-slate-600 mb-8 text-lg font-medium leading-relaxed">
+            Your <strong className="text-slate-900 font-black">GHS {deal.amountGHS.toFixed(2)}</strong> is now locked
+            in a smart contract. The vendor has been notified to ship your item.
           </p>
-          <div className="bg-white/5 rounded-xl p-4 text-left space-y-2 mb-6">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Item</span>
-              <span className="text-white">{deal.itemName}</span>
+          
+          <div className="bg-slate-50 rounded-2xl p-5 text-left space-y-3 mb-8 border border-slate-100">
+            <div className="flex justify-between items-center text-base">
+              <span className="text-slate-500 font-bold">Item</span>
+              <span className="text-slate-900 font-extrabold">{deal.itemName}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Delivery Window</span>
-              <span className="text-amber-400 font-medium">72 hours</span>
+            <div className="flex justify-between items-center text-base">
+              <span className="text-slate-500 font-bold">Delivery Window</span>
+              <span className="text-emerald-700 font-black bg-emerald-100 px-3 py-1 rounded-full text-sm">72 hours</span>
             </div>
           </div>
-          <p className="text-sm text-gray-500">
+          
+          <p className="text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl">
             Check your email for a confirmation link to use when you receive your item.
           </p>
         </div>
@@ -207,103 +211,105 @@ export default function PayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      {/* Paystack Script */}
+    <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-16 sm:py-24">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
 
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-4">
-            <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-emerald-400 text-xs font-medium">Escrow Protected</span>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-6 shadow-sm">
+            <Lock className="w-4 h-4 text-emerald-600" />
+            <span className="text-emerald-700 text-sm font-bold tracking-wide">Blockchain Escrow Protected</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Secure Payment</h1>
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Secure Payment</h1>
         </div>
 
         {/* Deal Details Card */}
-        <div className="glass rounded-2xl p-6 mb-6">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Package className="w-6 h-6 text-emerald-400" />
+        <div className="bg-white rounded-[2rem] p-8 sm:p-10 mb-8 shadow-soft border border-slate-100">
+          <div className="flex items-start gap-5 mb-6">
+            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Package className="w-8 h-8 text-emerald-600" />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-bold text-white">{deal.itemName}</h2>
-              <p className="text-sm text-gray-400 mt-1">{deal.description}</p>
+              <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">{deal.itemName}</h2>
+              <p className="text-base font-medium text-slate-500 mt-2 leading-relaxed">{deal.description}</p>
             </div>
           </div>
 
-          <div className="bg-white/5 rounded-xl p-4 mb-4">
+          <div className="bg-slate-50 rounded-2xl p-6 mb-6 border border-slate-100">
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Amount</span>
-              <span className="text-2xl font-bold text-white">
-                ₵{deal.amountGHS.toFixed(2)}
+              <span className="text-lg font-bold text-slate-500">Amount Due</span>
+              <span className="text-4xl font-black text-slate-900 tracking-tight">
+                <span className="text-2xl text-slate-400 mr-1">₵</span>
+                {deal.amountGHS.toFixed(2)}
               </span>
             </div>
           </div>
 
           {/* Vendor Info */}
-          <div className="flex items-center justify-between pt-4 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-slate-100">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Sold by</p>
-              <p className="text-sm font-medium text-white">{deal.vendorName}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Sold securely by</p>
+              <p className="text-lg font-extrabold text-slate-900">{deal.vendorName}</p>
             </div>
             {vendor && (
-              <TrustScore
-                score={vendor.trustScore}
-                totalTrades={vendor.totalTrades}
-                compact
-              />
+              <div className="scale-105 origin-left sm:origin-right">
+                <TrustScore
+                  score={vendor.trustScore}
+                  totalTrades={vendor.totalTrades}
+                  compact
+                />
+              </div>
             )}
           </div>
         </div>
 
         {/* Buyer Form */}
-        <div className="glass rounded-2xl p-6 mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Your Details</h3>
+        <div className="bg-white rounded-[2rem] p-8 sm:p-10 mb-8 shadow-soft border border-slate-100">
+          <h3 className="text-xl font-extrabold text-slate-900 mb-6 tracking-tight">Your Details</h3>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Full Name</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="text"
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
                   required
-                  placeholder="Kwame Asante"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                  placeholder="e.g. Kwame Asante"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Phone Number</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="tel"
                   value={buyerPhone}
                   onChange={(e) => setBuyerPhone(e.target.value)}
                   required
-                  placeholder="0241234567"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                  placeholder="e.g. 0241234567"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="email"
                   value={buyerEmail}
                   onChange={(e) => setBuyerEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                 />
               </div>
             </div>
@@ -314,44 +320,50 @@ export default function PayPage() {
         <button
           onClick={handlePay}
           disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
-          className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-2xl shadow-emerald-500/20 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
         >
           {paying ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Processing...
+              <Loader2 className="w-6 h-6 animate-spin" />
+              Processing Securely...
             </>
           ) : (
             <>
-              <Lock className="w-5 h-5" />
+              <Lock className="w-6 h-6" />
               Pay ₵{deal.amountGHS.toFixed(2)} Securely
             </>
           )}
         </button>
 
         {/* Trust Section */}
-        <div className="mt-8 glass rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-400" />
+        <div className="mt-10 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+          <h3 className="text-base font-extrabold text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
+            <Shield className="w-5 h-5 text-emerald-600" />
             How SafeTrade Protects You
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Lock className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-gray-400">
-                Your money is held in a blockchain smart contract — the vendor can&apos;t touch it until you confirm delivery
+          <div className="space-y-5">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Lock className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                Your money is held in a blockchain smart contract — the vendor can't touch it until you confirm delivery.
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <Clock className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-gray-400">
-                72-hour delivery window — if you don&apos;t receive your item, raise a dispute
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Clock className="w-4 h-4 text-blue-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                72-hour delivery window — if you don't receive your item, raise a dispute effortlessly.
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <Shield className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-gray-400">
-                Full refund if the vendor fails to deliver and dispute is resolved in your favor
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Shield className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                Full automatic refund if the vendor fails to deliver and the dispute is resolved in your favor.
               </p>
             </div>
           </div>

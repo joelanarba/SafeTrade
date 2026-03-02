@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-jakarta',
 });
 
 export const metadata: Metadata = {
@@ -28,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans`}>
+    <html lang="en">
+      <body className={`${jakarta.variable} font-sans`}>
         <AuthProvider>
           <Navbar />
           <main className="pt-16">{children}</main>
@@ -37,10 +37,11 @@ export default function RootLayout({
             position="top-center"
             toastOptions={{
               style: {
-                background: 'hsl(0 0% 10%)',
-                color: '#fff',
-                border: '1px solid hsl(0 0% 15%)',
-                borderRadius: '12px',
+                background: '#fff',
+                color: '#0F172A',
+                border: '1px solid #E2E8F0',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
               },
               success: {
                 iconTheme: {

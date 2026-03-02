@@ -17,6 +17,7 @@ import {
   X,
   CheckCircle,
   Banknote,
+  Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -104,133 +105,161 @@ function DashboardContent() {
   const completedDeals = deals.filter((d) => d.status === 'completed');
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 px-4 py-24 sm:py-32">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              Welcome, {vendor?.displayName || 'Vendor'}!
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Welcome, {vendor?.displayName || 'Vendor'}
             </h1>
-            <p className="text-gray-400 text-sm mt-1">Manage your deals and track payments</p>
+            <p className="text-slate-500 text-base mt-2 font-medium">Manage your protected deals and track payouts.</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
+            className="group flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl text-base font-bold transition-all shadow-md hover-lift"
           >
-            <Plus className="w-4 h-4" />
-            New Deal
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+            Create New Deal
           </button>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="glass rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                <Banknote className="w-5 h-5 text-emerald-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <Banknote className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">
-              ₵{totalEarnings.toLocaleString('en-GH', { minimumFractionDigits: 2 })}
+            <p className="text-4xl font-extrabold text-slate-900 tracking-tight">
+              <span className="text-2xl text-slate-400 font-bold mr-1">₵</span>
+              {totalEarnings.toLocaleString('en-GH', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Total Earnings</p>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-2">Total Earnings</p>
           </div>
 
-          <div className="glass rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <Package className="w-5 h-5 text-blue-400" />
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                <Package className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{activeDeals.length}</p>
-            <p className="text-xs text-gray-500 mt-1">Active Deals</p>
+            <p className="text-4xl font-extrabold text-slate-900 tracking-tight">{activeDeals.length}</p>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-2">Active Deals</p>
           </div>
 
-          <div className="glass rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-amber-400" />
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-amber-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">{completedDeals.length}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed</p>
+            <p className="text-4xl font-extrabold text-slate-900 tracking-tight">{completedDeals.length}</p>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-2">Completed</p>
           </div>
 
-          <div className="glass rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-purple-400" />
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
             </div>
-            <div className="mt-1">
+            <div className="mt-2 scale-110 origin-left">
               <TrustScore
                 score={vendor?.trustScore || 0}
                 totalTrades={vendor?.totalTrades || 0}
                 compact
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Trust Score</p>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-3">Trust Score</p>
           </div>
         </div>
 
         {/* Deals List */}
-        <div className="glass rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/5">
-            <h2 className="text-lg font-semibold text-white">Your Deals</h2>
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
+            <h2 className="text-xl font-bold text-slate-900">Recent Transactions</h2>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search deals..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+            <div className="flex items-center justify-center py-32">
+              <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             </div>
           ) : deals.length === 0 ? (
-            <div className="text-center py-20">
-              <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 mb-2">No deals yet</p>
-              <p className="text-gray-600 text-sm">Create your first deal and share the link with your buyer</p>
+            <div className="text-center py-24 sm:py-32">
+              <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Package className="w-10 h-10 text-slate-400" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mb-2">No deals yet</p>
+              <p className="text-base text-slate-500 max-w-sm mx-auto">Create your first deal to generate a secure payment link for your buyer.</p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-8 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-6 py-3 rounded-xl font-bold transition-colors"
+              >
+                Create First Deal
+              </button>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-slate-100">
               {deals.map((deal) => (
                 <div
                   key={deal.id}
-                  className="px-6 py-4 hover:bg-white/[0.02] transition-colors"
+                  className="px-8 py-6 hover:bg-slate-50/80 transition-colors group"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-white truncate">{deal.itemName}</h3>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-bold text-slate-900 truncate">{deal.itemName}</h3>
                         <StatusBadge status={deal.status} />
                       </div>
-                      <p className="text-sm text-gray-500">
-                        ₵{deal.amountGHS.toFixed(2)}
-                        {deal.buyerName && ` • ${deal.buyerName}`}
-                        {' • '}
-                        {new Date(deal.createdAt).toLocaleDateString('en-GH', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                      {deal.escrowTxHash && (
-                        <a
-                          href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-400 mt-1"
-                        >
-                          View on BSCScan <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-slate-500">
+                        <span className="text-slate-900 font-bold">₵{deal.amountGHS.toFixed(2)}</span>
+                        {deal.buyerName && (
+                          <>
+                            <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                            <span>{deal.buyerName}</span>
+                          </>
+                        )}
+                        <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                        <span>
+                          {new Date(deal.createdAt).toLocaleDateString('en-GH', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        {deal.escrowTxHash && (
+                          <>
+                            <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                            <a
+                              href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline underline-offset-2"
+                            >
+                              Tx Hash <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    
+                    <div className="flex items-center gap-3">
                       {deal.status === 'pending_payment' && (
                         <button
                           onClick={() => copyPaymentLink(deal.id)}
-                          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-xs transition-all border border-white/5"
+                          className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm"
                         >
-                          <Copy className="w-3.5 h-3.5" />
+                          <Copy className="w-4 h-4" />
                           Copy Link
                         </button>
                       )}
@@ -245,83 +274,90 @@ function DashboardContent() {
 
       {/* Create Deal Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="glass rounded-2xl w-full max-w-md p-6 relative border border-white/10">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 p-4 sm:p-0">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 sm:p-10 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowCreateModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              className="absolute top-6 right-6 w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-xl font-bold text-white mb-1">Create New Deal</h2>
-            <p className="text-sm text-gray-400 mb-6">
-              Fill in the details and share the payment link
-            </p>
+            <div className="mb-8">
+              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-5">
+                <Plus className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">Create New Deal</h2>
+              <p className="text-base font-medium text-slate-500">
+                Setup the product details to generate your secure escrow link.
+              </p>
+            </div>
 
-            <form onSubmit={handleCreateDeal} className="space-y-4">
+            <form onSubmit={handleCreateDeal} className="space-y-5">
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Item Name</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Item Name</label>
                 <input
                   type="text"
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
                   required
-                  placeholder="e.g. iPhone 14 Pro Max"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                  placeholder="e.g. Pre-owned iPhone 14 Pro Max"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Description</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
                   rows={3}
-                  placeholder="Describe the item — color, size, condition..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 resize-none"
+                  placeholder="Describe the condition, color, delivery terms..."
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all resize-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Price (GHS)</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₵</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Price (GHS)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₵</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      required
+                      placeholder="0.00"
+                      className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl pl-9 pr-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Your Phone</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
-                    placeholder="0.00"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    placeholder="e.g. 0241234567"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Your Phone Number</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  placeholder="e.g. 0241234567"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-                />
-              </div>
-
               {price && parseFloat(price) > 0 && (
-                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 text-sm">
-                  <div className="flex justify-between text-gray-400">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">
+                  <div className="flex justify-between text-sm font-medium text-slate-500 mb-2">
                     <span>Platform Fee (2%)</span>
                     <span>₵{(parseFloat(price) * 0.02).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-white font-semibold mt-1">
+                  <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
                     <span>You Receive</span>
-                    <span>₵{(parseFloat(price) * 0.98).toFixed(2)}</span>
+                    <span className="text-emerald-600">₵{(parseFloat(price) * 0.98).toFixed(2)}</span>
                   </div>
                 </div>
               )}
@@ -329,10 +365,10 @@ function DashboardContent() {
               <button
                 type="submit"
                 disabled={creating}
-                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white py-3 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 mt-6 rounded-2xl font-bold text-lg transition-all shadow-md hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-                Create Deal & Get Link
+                {creating && <Loader2 className="w-5 h-5 animate-spin" />}
+                Generate Payment Link
               </button>
             </form>
           </div>
