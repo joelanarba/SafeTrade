@@ -6,11 +6,11 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import TrustScore from '@/components/TrustScore';
 import { BnbLogo } from '@/components/BnbChainBadge';
+import ShareLink from '@/components/ShareLink';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
 import { Deal } from '@/lib/types';
 import {
   Plus,
-  Copy,
   ExternalLink,
   Package,
   TrendingUp,
@@ -92,11 +92,12 @@ function DashboardContent() {
     }
   }
 
-  function copyPaymentLink(dealId: string) {
-    const url = `${window.location.origin}/pay/${dealId}`;
-    navigator.clipboard.writeText(url);
-    toast.success('Payment link copied!');
-  }
+  const getPaymentUrl = (dealId: string) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/pay/${dealId}`;
+    }
+    return '';
+  };
 
   const totalEarnings = deals
     .filter((d) => d.status === 'completed')
@@ -257,13 +258,11 @@ function DashboardContent() {
                     
                     <div className="flex items-center gap-3">
                       {deal.status === 'pending_payment' && (
-                        <button
-                          onClick={() => copyPaymentLink(deal.id)}
-                          className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm"
-                        >
-                          <Copy className="w-4 h-4" />
-                          Copy Link
-                        </button>
+                        <ShareLink 
+                          url={getPaymentUrl(deal.id)} 
+                          title={`SafeTrade Escrow: ${deal.itemName}`} 
+                          text={`Securely pay ₵${deal.amountGHS.toFixed(2)} to ${vendor?.displayName || 'me'} using SafeTrade. Your money is protected!`}
+                        />
                       )}
                     </div>
                   </div>

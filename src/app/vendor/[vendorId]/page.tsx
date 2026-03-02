@@ -6,6 +6,7 @@ import { getVendor, getVendorTransactionHistory } from '@/lib/firestore';
 import { Vendor, Deal } from '@/lib/types';
 import TrustScore from '@/components/TrustScore';
 import StatusBadge from '@/components/StatusBadge';
+import ShareLink from '@/components/ShareLink';
 import {
   Shield,
   CheckCircle,
@@ -25,9 +26,13 @@ export default function VendorProfilePage() {
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [history, setHistory] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileUrl, setProfileUrl] = useState('');
 
   useEffect(() => {
     loadVendor();
+    if (typeof window !== 'undefined') {
+      setProfileUrl(window.location.href);
+    }
   }, [vendorId]);
 
   async function loadVendor() {
@@ -96,6 +101,7 @@ export default function VendorProfilePage() {
             {vendor.displayName}
           </h1>
 
+          {/* Trust Score & Share */}
           {vendor.verified && (
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-sm font-bold px-4 py-1.5 rounded-full mb-8">
               <BadgeCheck className="w-4 h-4" />
@@ -103,9 +109,18 @@ export default function VendorProfilePage() {
             </div>
           )}
 
-          {/* Trust Score */}
-          <div className="flex justify-center mb-10 scale-110">
-            <TrustScore score={vendor.trustScore} totalTrades={vendor.totalTrades} />
+          <div className="flex flex-col items-center justify-center mb-10 gap-6">
+            <div className="scale-110">
+              <TrustScore score={vendor.trustScore} totalTrades={vendor.totalTrades} />
+            </div>
+            
+            <ShareLink 
+              url={profileUrl} 
+              title={`Trust Profile: ${vendor.displayName}`}
+              text={`Check out my verified trust profile on SafeTrade. ${vendor.successfulTrades} completed safe trades!`}
+              buttonText="Share Profile"
+              className="mt-2"
+            />
           </div>
 
           {/* Stats */}
