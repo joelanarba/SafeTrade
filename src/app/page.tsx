@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, ArrowRight, Lock, CheckCircle, Banknote, TrendingUp, Users, Zap } from 'lucide-react';
+import { Shield, ArrowRight, Lock, CheckCircle, Banknote, TrendingUp, Users, Zap, Search, Star, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
 import { getTotalDealsCount } from '@/lib/firestore';
+import Image from 'next/image';
 
 export default function Home() {
   const [dealCount, setDealCount] = useState(0);
@@ -51,13 +52,12 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-slate-900 leading-[1.1] mb-8 tracking-tight">
-            Stop Getting Scammed.<br />
-            <span className="text-emerald-600">Start Trading Safely.</span>
+            Build Trust. Sell More.<br />
+            <span className="text-emerald-600">Never Lose a Deal to Doubt Again.</span>
           </h1>
 
-          <p className="text-lg sm:text-2xl text-slate-600 max-w-3xl mx-auto mb-12 leading-relaxed font-medium">
-            Buy from Instagram & WhatsApp vendors with total confidence. Your money stays securely in escrow until
-            you receive your item. Protected by unbreakable smart contracts.
+          <p className="text-lg sm:text-2xl text-slate-600 max-w-4xl mx-auto mb-12 leading-relaxed font-medium">
+            Social commerce in Ghana runs on Instagram and WhatsApp — but payments still run on blind trust. SafeTrade protects every transaction so your customers feel safe buying from you. No awkward "send MoMo first." No lost deals. No unnecessary risk.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-20">
@@ -65,7 +65,7 @@ export default function Home() {
               href="/login"
               className="group flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-2xl text-lg font-bold transition-all shadow-soft hover-lift w-full sm:w-auto"
             >
-              I'm a Vendor — Get Started
+              I'm a Vendor — Start Securing My Sales
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <a
@@ -83,8 +83,8 @@ export default function Home() {
               <p className="text-sm sm:text-base font-bold text-slate-500 uppercase tracking-wider">Deals Secured</p>
             </div>
             <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 border border-white shadow-sm hover-lift">
-              <p className="text-4xl sm:text-5xl font-black text-slate-900 mb-2">₵0</p>
-              <p className="text-sm sm:text-base font-bold text-slate-500 uppercase tracking-wider">Lost to Scams</p>
+              <p className="text-4xl sm:text-5xl font-black text-slate-900 mb-2">400+</p>
+              <p className="text-sm sm:text-base font-bold text-slate-500 uppercase tracking-wider">Vendors Protected</p>
             </div>
             <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 border border-white shadow-sm hover-lift">
               <p className="text-4xl sm:text-5xl font-black text-emerald-600 mb-2">4.8</p>
@@ -94,115 +94,208 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="relative px-4 py-32 bg-white">
+      {/* Why Vendors Use SafeTrade */}
+      <section className="relative px-4 py-32 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-              How SafeTrade <span className="text-emerald-600">Works</span>
+              Why Vendors Use <span className="text-emerald-600">SafeTrade</span>
             </h2>
-            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">
-              Three simple steps to protect every social commerce transaction.
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
-            {/* Step 1 */}
-            <div className="bg-slate-50 rounded-[2rem] p-10 text-center border-2 border-transparent hover:border-emerald-100 transition-all hover-lift">
-              <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-sm">
-                <Lock className="w-10 h-10 text-emerald-600" />
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-slate-50 rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-8">
+                <TrendingUp className="w-8 h-8 text-blue-600" />
               </div>
-              <div className="inline-flex items-center text-emerald-600 text-sm font-black px-4 py-1.5 rounded-full mb-6 bg-emerald-50">
-                STEP 1
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Buyer Pays Into Escrow</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Increase Conversions</h3>
               <p className="text-slate-600 text-lg leading-relaxed">
-                Instead of sending MoMo directly to the vendor, pay through a secure SafeTrade link. Funds are locked in a smart contract.
+                Buyers hesitate when asked to send money upfront. SafeTrade removes that fear — more buyers complete checkout.
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="bg-slate-50 rounded-[2rem] p-10 text-center border-2 border-transparent hover:border-blue-100 transition-all hover-lift">
-              <div className="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-sm">
-                <Banknote className="w-10 h-10 text-blue-600" />
+            <div className="bg-slate-50 rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-8">
+                <Star className="w-8 h-8 text-amber-600" />
               </div>
-              <div className="inline-flex items-center text-blue-600 text-sm font-black px-4 py-1.5 rounded-full mb-6 bg-blue-50">
-                STEP 2
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Vendor Ships Item</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Build Verified Reputation</h3>
               <p className="text-slate-600 text-lg leading-relaxed">
-                The vendor receives an instant notification that payment is secured. They safely ship the item, knowing the money is waiting.
+                Every completed transaction increases your SafeTrade Trust Score. Show proof. Not promises.
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div className="bg-slate-50 rounded-[2rem] p-10 text-center border-2 border-transparent hover:border-emerald-100 transition-all hover-lift">
-              <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-sm">
-                <CheckCircle className="w-10 h-10 text-emerald-600" />
+            <div className="bg-slate-50 rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
+              <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-8">
+                <Shield className="w-8 h-8 text-emerald-600" />
               </div>
-              <div className="inline-flex items-center text-emerald-600 text-sm font-black px-4 py-1.5 rounded-full mb-6 bg-emerald-50">
-                STEP 3
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Confirm & Release</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Protect Yourself From Fraud</h3>
               <p className="text-slate-600 text-lg leading-relaxed">
-                Once the item arrives, the buyer confirms delivery. Funds are automatically released to the vendor's Mobile Money account.
+                Funds are secured before you ship. No fake payment screenshots. No risky reversals.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-8">
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Stand Out From Competitors</h3>
+              <p className="text-slate-600 text-lg leading-relaxed">
+                Two vendors. Same product. Only one offers protected payment. Guess who wins the sale?
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Bento Grid */}
-      <section className="relative px-4 py-32 bg-slate-50">
+      {/* How It Works */}
+      <section id="how-it-works" className="relative px-4 py-32 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-              Built for <span className="text-emerald-600">Zero Trust</span>
+              How It <span className="text-emerald-600">Works</span>
             </h2>
-            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">
-              We eliminated the risk so you don't have to worry.
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8">
-                <Shield className="w-8 h-8 text-emerald-600" />
+          <div className="grid md:grid-cols-4 gap-6 sm:gap-8">
+            {/* Step 1 */}
+            <div className="bg-white rounded-[2rem] p-8 text-center border border-slate-100 hover:border-emerald-100 transition-all hover-lift shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm text-xl font-black">
+                1
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Immutable Blockchain Proof</h3>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Every transaction is recorded on the BNB Smart Chain. Both buyers and sellers receive a verifiable transaction hash as absolute proof of funds.
+              <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Generate Secure Payment Link</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Create a SafeTrade deal in seconds and share the link in your Instagram or WhatsApp chat.
               </p>
             </div>
 
-            <div className="bg-white rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
-              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-8">
-                <TrendingUp className="w-8 h-8 text-blue-600" />
+            {/* Step 2 */}
+            <div className="bg-white rounded-[2rem] p-8 text-center border border-slate-100 hover:border-emerald-100 transition-all hover-lift shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm text-xl font-black">
+                2
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Public Vendor Trust Scores</h3>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Bad actors can't hide. Every vendor builds a public trust score based on successful, completed trades. Verified vendors receive a trust badge.
+              <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Buyer Pays Securely</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Buyer pays via Mobile Money. Funds are locked in escrow.
               </p>
             </div>
 
-            <div className="bg-white rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
-              <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-8">
-                <Users className="w-8 h-8 text-amber-600" />
+            {/* Step 3 */}
+            <div className="bg-white rounded-[2rem] p-8 text-center border border-slate-100 hover:border-emerald-100 transition-all hover-lift shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm text-xl font-black">
+                3
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">No Buyer Account Needed</h3>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Reduce friction. Buyers simply click your SafeTrade link, enter their address, and pay instantly with Mobile Money or cards via Paystack.
+              <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Ship With Confidence</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                You ship knowing the money is secured.
               </p>
             </div>
 
-            <div className="bg-white rounded-[2rem] p-10 sm:p-12 shadow-soft hover-lift border border-slate-100">
-              <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-8">
-                <Zap className="w-8 h-8 text-purple-600" />
+            {/* Step 4 */}
+            <div className="bg-white rounded-[2rem] p-8 text-center border border-slate-100 hover:border-emerald-100 transition-all hover-lift shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm text-xl font-black">
+                4
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">72-Hour Auto-Release</h3>
-              <p className="text-slate-600 text-lg leading-relaxed">
-                Vendors don't wait forever. If a buyer forgets to confirm and no dispute is raised within 72 hours, algorithms automatically release the funds.
+              <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Delivery Confirmed. Funds Released.</h3>
+              <p className="text-slate-600 text-base leading-relaxed">
+                Buyer confirms receipt. Payment is instantly released. If a dispute occurs, SafeTrade steps in.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Profile Section */}
+      <section className="relative px-4 py-32 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex-1 lg:pr-12">
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
+              Public <span className="text-emerald-600">Trust Profiles</span>
+            </h2>
+            <p className="text-slate-600 text-xl font-medium leading-relaxed mb-8">
+              Every vendor builds a visible trust score based on completed transactions, successful deliveries, and dispute history. Turn your good service into verifiable proof.
+            </p>
+            <ul className="space-y-5">
+              <li className="flex items-start gap-4">
+                <div className="mt-1 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-lg">Verified Sellers</h4>
+                  <p className="text-slate-500">Stand out with a verified badge when you connect your credentials.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-4">
+                <div className="mt-1 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-lg">Transparent History</h4>
+                  <p className="text-slate-500">Show buyers exactly how many successful trades you've completed.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="flex-1 w-full max-w-md mx-auto relative">
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-100 to-blue-50 rounded-[3rem] transform rotate-3 scale-105"></div>
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl relative border border-slate-100">
+              <div className="flex items-center gap-5 mb-8">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                  SP
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-2xl font-bold text-slate-900">SneakerPlugGH</h3>
+                    <Shield className="w-5 h-5 text-emerald-500" fill="currentColor" />
+                  </div>
+                  <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
+                    Verified Seller
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                  <p className="text-3xl font-black text-slate-900 mb-1">324</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Transactions</p>
+                </div>
+                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Star className="w-6 h-6 text-amber-500" fill="currentColor" />
+                    <p className="text-3xl font-black text-emerald-700">4.9</p>
+                  </div>
+                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide">Trust Score</p>
+                </div>
+              </div>
+              
+              <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-between">
+                <span className="text-sm font-semibold text-red-800">Disputes Received</span>
+                <span className="text-sm font-bold bg-white text-red-600 px-3 py-1 rounded-lg border border-red-200">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Works With Section */}
+      <section className="relative px-4 py-24 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-6 tracking-tight">
+            Designed for Social Commerce
+          </h2>
+          <p className="text-slate-600 text-xl font-medium leading-relaxed mb-12">
+            Works seamlessly with Instagram, WhatsApp, and TikTok. No website required. No complex setup. Just safer transactions.
+          </p>
+          <div className="flex flex-wrap justify-center gap-6 opacity-70">
+            {/* Simple logo placeholders styling to represent social platforms without custom SVGs */}
+            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-pink-600 font-bold text-lg">Instagram</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-green-500 font-bold text-lg">WhatsApp</span>
+            </div>
+            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-slate-900 font-bold text-lg">TikTok</span>
             </div>
           </div>
         </div>
@@ -220,18 +313,23 @@ export default function Home() {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-[150px] opacity-20 pointer-events-none" />
             
             <h2 className="text-4xl sm:text-6xl font-extrabold text-white mb-8 tracking-tight relative z-10">
-              Ready to Trade Safely?
+              Ready to Sell With Confidence?
             </h2>
             <p className="text-slate-300 text-xl sm:text-2xl mb-12 max-w-2xl mx-auto font-medium relative z-10">
-              Join thousands of top vendors in Ghana who use SafeTrade to build ultimate trust with their customers.
+              Join vendors across Ghana who refuse to lose sales because of trust issues.
             </p>
-            <Link
-              href="/login"
-              className="relative z-10 group inline-flex items-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-10 py-5 rounded-2xl text-xl font-bold transition-all shadow-lg hover-lift"
-            >
-              Create Your First Deal
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <div className="flex flex-col items-center gap-6 relative z-10">
+              <Link
+                href="/login"
+                className="group inline-flex items-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-10 py-5 rounded-2xl text-xl font-bold transition-all shadow-lg hover-lift"
+              >
+                Create Your First SafeTrade Deal
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <p className="text-slate-400 font-medium text-sm">
+                Buying from a vendor? Ask them to send you a SafeTrade link.
+              </p>
+            </div>
           </div>
         </div>
       </section>
