@@ -49,6 +49,7 @@ export default function PayPage() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [confirmationToken, setConfirmationToken] = useState<string | null>(null);
 
   // Buyer form
   const [buyerName, setBuyerName] = useState('');
@@ -141,7 +142,11 @@ export default function PayPage() {
       });
 
       if (res.ok) {
+        const data = await res.json();
         setPaid(true);
+        if (data.confirmationToken) {
+          setConfirmationToken(data.confirmationToken);
+        }
         toast.success('Payment successful! Your money is in escrow.');
       } else {
         toast.error('Payment verification failed. Contact support.');
@@ -294,8 +299,18 @@ export default function PayPage() {
           </div>
           
           <p className="text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl mb-4">
-            Check your email for a confirmation link to use when you receive your item.
+            When you receive your item, use the button below to confirm delivery or raise a dispute.
           </p>
+
+          {confirmationToken && (
+            <a
+              href={`/confirm/${confirmationToken}`}
+              className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-xl font-bold text-base transition-all shadow-md mb-4"
+            >
+              <CheckCircle className="w-5 h-5" />
+              Confirm Delivery / Report Issue
+            </a>
+          )}
 
           {deal.escrowTxHash && (
             <a

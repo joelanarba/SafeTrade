@@ -92,7 +92,11 @@ export async function POST(req: NextRequest) {
       console.error('Email sending failed (non-critical):', emailErr);
     }
 
-    return NextResponse.json({ message: 'Payment verified and escrow locked', escrowTxHash }, { status: 200 });
+    return NextResponse.json({ 
+      message: 'Payment verified and escrow locked', 
+      escrowTxHash,
+      confirmationToken: deal.confirmationToken,
+    }, { status: 200 });
   } catch (error) {
     console.error('Verification error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
