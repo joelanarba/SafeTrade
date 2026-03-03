@@ -6,6 +6,7 @@ import { getVendor, getVendorTransactionHistory } from '@/lib/firestore';
 import { Vendor, Deal } from '@/lib/types';
 import TrustScore from '@/components/TrustScore';
 import StatusBadge from '@/components/StatusBadge';
+import VendorBadge from '@/components/VendorBadge';
 import ShareLink from '@/components/ShareLink';
 import {
   Shield,
@@ -17,6 +18,10 @@ import {
   BadgeCheck,
   TrendingUp,
   Scale,
+  Copy,
+  MessageCircle,
+  Instagram,
+  Check
 } from 'lucide-react';
 
 export default function VendorProfilePage() {
@@ -27,6 +32,8 @@ export default function VendorProfilePage() {
   const [history, setHistory] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileUrl, setProfileUrl] = useState('');
+  const [copiedProfile, setCopiedProfile] = useState(false);
+  const [copiedIg, setCopiedIg] = useState(false);
 
   useEffect(() => {
     loadVendor();
@@ -40,7 +47,7 @@ export default function VendorProfilePage() {
       const v = await getVendor(vendorId);
       setVendor(v);
       if (v) {
-        const h = await getVendorTransactionHistory(vendorId);
+        const h = await getVendorTransactionHistory(vendorId, 5);
         setHistory(h);
       }
     } catch (err) {
@@ -77,6 +84,31 @@ export default function VendorProfilePage() {
     year: 'numeric',
   });
 
+  const handleCopyProfile = async () => {
+    try {
+      await navigator.clipboard.writeText(`safetrade.app/vendor/${vendorId}`);
+      setCopiedProfile(true);
+      setTimeout(() => setCopiedProfile(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Check out my SafeTrade profile: safetrade.app/vendor/${vendorId}`)}`, '_blank');
+  };
+
+  const handleShareIG = async () => {
+    try {
+      const caption = `I'm a verified SafeTrade seller. Check my trust score before you buy.\n\nsafetrade.app/vendor/${vendorId}`;
+      await navigator.clipboard.writeText(caption);
+      setCopiedIg(true);
+      setTimeout(() => setCopiedIg(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-16 sm:py-24">
       <div className="max-w-3xl mx-auto">
@@ -102,25 +134,44 @@ export default function VendorProfilePage() {
           </h1>
 
           {/* Trust Score & Share */}
-          {vendor.verified && (
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-sm font-bold px-4 py-1.5 rounded-full mb-8">
-              <BadgeCheck className="w-4 h-4" />
-              Verified Vendor
-            </div>
-          )}
+          <div className="mb-8">
+            <VendorBadge
+              successfulTrades={vendor.successfulTrades}
+              trustScore={vendor.trustScore}
+              verified={vendor.verified}
+            />
+          </div>
 
           <div className="flex flex-col items-center justify-center mb-10 gap-6">
             <div className="scale-110">
               <TrustScore score={vendor.trustScore} totalTrades={vendor.totalTrades} />
             </div>
             
-            <ShareLink 
-              url={profileUrl} 
-              title={`Trust Profile: ${vendor.displayName}`}
-              text={`Check out my verified trust profile on SafeTrade. ${vendor.successfulTrades} completed safe trades!`}
-              buttonText="Share Profile"
-              className="mt-2"
-            />
+            <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full justify-center">
+              <button
+                onClick={handleCopyProfile}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
+              >
+                {copiedProfile ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copiedProfile ? 'Copied Link!' : 'Copy Profile Link'}
+              </button>
+              
+              <button
+                onClick={handleShareWhatsApp}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 border border-[#25D366]/20 rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Share on WhatsApp
+              </button>
+
+              <button
+                onClick={handleShareIG}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-pink-600 hover:from-purple-500/20 hover:to-pink-500/20 border border-pink-500/20 rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
+              >
+                {copiedIg ? <Check className="w-4 h-4" /> : <Instagram className="w-4 h-4" />}
+                {copiedIg ? 'Copied Caption!' : 'Share on Instagram'}
+              </button>
+            </div>
           </div>
 
           {/* Stats */}
@@ -181,9 +232,6 @@ export default function VendorProfilePage() {
                         })}
                       </p>
                     </div>
-                    <div className="scale-105 origin-right">
-                      <StatusBadge status={deal.status} />
-                    </div>
                   </div>
                 </div>
               ))}
@@ -192,10 +240,10 @@ export default function VendorProfilePage() {
         </div>
 
         {/* SafeTrade Branding */}
-        <div className="text-center mt-12 mb-8">
-          <div className="inline-flex items-center gap-3 text-slate-400">
-            <Shield className="w-5 h-5" />
-            <span className="text-sm font-bold tracking-wide uppercase">Trust profile securely powered by SafeTrade</span>
+        <div className="text-center mt-12 mb-8 opacity-60 hover:opacity-100 transition-opacity">
+          <div className="inline-flex items-center gap-2 text-slate-500">
+            <Shield className="w-4 h-4" />
+            <span className="text-xs font-bold tracking-widest uppercase">Powered by SafeTrade</span>
           </div>
         </div>
       </div>

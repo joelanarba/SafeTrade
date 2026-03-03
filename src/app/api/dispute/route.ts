@@ -6,9 +6,9 @@ import { sendDisputeAlert } from '@/lib/email';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { dealId, confirmationToken, reason, photoUrl } = body;
+    const { dealId, confirmationToken, reason, photoUrl, category, photoUrls, details } = body;
 
-    if (!dealId || !confirmationToken || !reason) {
+    if (!dealId || !confirmationToken || (!reason && !details)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -39,11 +39,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Dispute window has expired (72 hours)' }, { status: 400 });
     }
 
+    // Build full reason text
+    const fullReason = category 
+      ? `[${category}] ${details || reason || ''}`.trim()
+      : reason || details || '';
+
     // Update deal with dispute info
     await dealRef.update({
       status: 'disputed',
-      disputeReason: reason,
-      disputePhoto: photoUrl || '',
+      disputeReason: fullReason,
+      disputePhoto: photoUrl || (photoUrls && photoUrls.length > 0 ? photoUrls[0] : ''),
+      disputeCategory: category || '',
+      disputePhotos: photoUrls || (photoUrl ? [photoUrl] : []),
       updatedAt: new Date().toISOString(),
     });
 

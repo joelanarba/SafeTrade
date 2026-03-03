@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
-import { getDisputedDeals } from '@/lib/firestore';
-import { Deal } from '@/lib/types';
+import { getDisputedDeals, getVendor } from '@/lib/firestore';
+import { Deal, Vendor } from '@/lib/types';
 import { auth } from '@/lib/firebase';
 import {
   Shield,
@@ -16,6 +16,11 @@ import {
   ExternalLink,
   Image as ImageIcon,
   ShieldOff,
+  Truck,
+  Info,
+  Phone,
+  Star,
+  MessageCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -60,6 +65,7 @@ function AdminGate() {
 function AdminContent() {
   const { user } = useAuth();
   const [disputes, setDisputes] = useState<Deal[]>([]);
+  const [vendorMap, setVendorMap] = useState<Record<string, Vendor>>({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -71,6 +77,15 @@ function AdminContent() {
     try {
       const d = await getDisputedDeals();
       setDisputes(d);
+      // Load vendor data for each dispute
+      const vendors: Record<string, Vendor> = {};
+      for (const deal of d) {
+        if (!vendors[deal.vendorId]) {
+          const v = await getVendor(deal.vendorId);
+          if (v) vendors[deal.vendorId] = v;
+        }
+      }
+      setVendorMap(vendors);
     } catch (err) {
       console.error(err);
     } finally {
@@ -124,6 +139,20 @@ function AdminContent() {
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Admin Dashboard</h1>
             <p className="text-base font-medium text-slate-500 mt-1">Manage disputes and resolutions securely.</p>
           </div>
+        </div>
+
+        {/* Courier API Note */}
+        <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-8">
+          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Truck className="w-5 h-5 text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-blue-900 text-sm">Courier API Integration</p>
+            <p className="text-blue-700 text-xs font-medium mt-0.5">
+              Automated courier tracking and delivery confirmation coming soon. Currently, delivery is verified manually by buyers.
+            </p>
+          </div>
+          <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">Coming Soon</span>
         </div>
 
         {/* Disputes List */}
@@ -194,14 +223,80 @@ function AdminContent() {
                           {deal.disputeReason || 'No detailed reason provided by the buyer.'}
                         </p>
                         {deal.disputePhoto && (
+                          <div className="mt-4">
+                            <p className="text-xs font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-amber-600" />
+                              Evidence Photos
+                            </p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {(deal.disputePhotos && deal.disputePhotos.length > 0 ? deal.disputePhotos : [deal.disputePhoto]).map((photo: string, i: number) => (
+                                photo && (
+                                  <a
+                                    key={i}
+                                    href={photo}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block aspect-square rounded-xl overflow-hidden border-2 border-amber-200 hover:border-amber-400 transition-colors"
+                                  >
+                                    <img src={photo} alt={`Evidence ${i + 1}`} className="w-full h-full object-cover" />
+                                  </a>
+                                )
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Vendor Context */}
+                      {vendorMap[deal.vendorId] && (
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4">
+                          <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-3">Vendor Context</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="text-center">
+                              <div className="flex items-center justify-center gap-1 mb-1">
+                                <Star className="w-4 h-4 text-amber-500" />
+                              </div>
+                              <p className="text-lg font-black text-slate-900">{vendorMap[deal.vendorId].trustScore.toFixed(1)}</p>
+                              <p className="text-xs font-bold text-slate-500">Trust Score</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-black text-slate-900">{vendorMap[deal.vendorId].successfulTrades}</p>
+                              <p className="text-xs font-bold text-slate-500">Completed</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-black text-red-600">{vendorMap[deal.vendorId].disputes}</p>
+                              <p className="text-xs font-bold text-slate-500">Disputes</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-black text-slate-900">{vendorMap[deal.vendorId].totalTrades}</p>
+                              <p className="text-xs font-bold text-slate-500">Total Trades</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contact Buttons */}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        {deal.vendorPhone && (
                           <a
-                            href={deal.disputePhoto}
+                            href={`https://wa.me/${deal.vendorPhone.replace(/[^0-9]/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 mt-4 bg-white px-4 py-2 rounded-xl border border-blue-100 shadow-sm transition-all"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366]/20 px-4 py-2 rounded-xl border border-[#25D366]/20 transition-all"
                           >
-                            <ImageIcon className="w-4 h-4" />
-                            View Attached Evidence
+                            <MessageCircle className="w-4 h-4" />
+                            WhatsApp Vendor
+                          </a>
+                        )}
+                        {deal.buyerPhone && (
+                          <a
+                            href={`https://wa.me/${deal.buyerPhone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl border border-blue-100 transition-all"
+                          >
+                            <Phone className="w-4 h-4" />
+                            WhatsApp Buyer
                           </a>
                         )}
                       </div>

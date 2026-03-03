@@ -17,6 +17,11 @@ import {
   ExternalLink,
   ImagePlus,
   X,
+  Truck,
+  MapPin,
+  Hash,
+  Clock,
+  FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { storage } from '@/lib/firebase';
@@ -32,11 +37,21 @@ export default function ConfirmPage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
-  const [disputeReason, setDisputeReason] = useState('');
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [disputeCategory, setDisputeCategory] = useState('');
+  const [disputeDetails, setDisputeDetails] = useState('');
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submittingDispute, setSubmittingDispute] = useState(false);
   const [disputeSubmitted, setDisputeSubmitted] = useState(false);
+
+  const DISPUTE_CATEGORIES = [
+    'Item never arrived',
+    'Wrong item received',
+    'Item damaged or defective',
+    'Item not as described',
+    'Seller not responding',
+    'Other',
+  ];
 
   useEffect(() => {
     loadDeal();
@@ -85,35 +100,45 @@ export default function ConfirmPage() {
   }
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const totalFiles = photoFiles.length + newFiles.length;
+      if (totalFiles > 3) {
+        toast.error('Maximum 3 photos allowed');
         return;
       }
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
+      for (const file of newFiles) {
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} exceeds 5MB limit`);
+          return;
+        }
+      }
+      setPhotoFiles((prev) => [...prev, ...newFiles]);
+      setPhotoPreviews((prev) => [...prev, ...newFiles.map((f) => URL.createObjectURL(f))]);
     }
   }
 
-  function clearPhoto() {
-    setPhotoFile(null);
-    if (photoPreview) URL.revokeObjectURL(photoPreview);
-    setPhotoPreview(null);
+  function removePhoto(index: number) {
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleDispute(e: React.FormEvent) {
     e.preventDefault();
-    if (!deal || !disputeReason) return;
+    if (!deal || !disputeCategory) return;
     setSubmittingDispute(true);
     
     try {
-      let photoUrl = '';
-      if (photoFile) {
-        toast.loading('Uploading evidence photo...', { id: 'upload' });
-        const storageRef = ref(storage, `disputes/${deal.id}_${Date.now()}_${photoFile.name}`);
-        const uploadTask = await uploadBytesResumable(storageRef, photoFile);
-        photoUrl = await getDownloadURL(uploadTask.ref);
+      const uploadedUrls: string[] = [];
+      if (photoFiles.length > 0) {
+        toast.loading('Uploading evidence photos...', { id: 'upload' });
+        for (const file of photoFiles) {
+          const storageRef = ref(storage, `disputes/${deal.id}_${Date.now()}_${file.name}`);
+          const uploadTask = await uploadBytesResumable(storageRef, file);
+          const url = await getDownloadURL(uploadTask.ref);
+          uploadedUrls.push(url);
+        }
         toast.dismiss('upload');
       }
 
@@ -123,8 +148,9 @@ export default function ConfirmPage() {
         body: JSON.stringify({
           dealId: deal.id,
           confirmationToken: token,
-          reason: disputeReason,
-          photoUrl,
+          category: disputeCategory,
+          details: disputeDetails,
+          photoUrls: uploadedUrls,
         }),
       });
 
@@ -219,6 +245,38 @@ export default function ConfirmPage() {
             Our team will review your case and respond within 48 hours. Your funds remain securely
             locked in the escrow contract.
           </p>
+
+          {/* SLA Notice */}
+          <div className="mt-8 bg-slate-50 rounded-2xl p-6 border border-slate-100">
+            <div className="flex items-center gap-3 mb-4">
+              <Shield className="w-5 h-5 text-emerald-600" />
+              <h3 className="font-extrabold text-slate-900 text-sm">SafeTrade Dispute SLA</h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { step: 'Dispute Received', time: 'Immediately', done: true },
+                { step: 'Admin Review', time: 'Within 24 hours', done: false },
+                { step: 'Resolution Decision', time: 'Within 48 hours', done: false },
+                { step: 'Funds Released or Refunded', time: 'Within 72 hours', done: false },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    item.done ? 'bg-emerald-100' : 'bg-slate-200'
+                  }`}>
+                    {item.done ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-bold text-slate-900">{item.step}</span>
+                  </div>
+                  <span className="text-xs font-medium text-slate-500">{item.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -276,6 +334,34 @@ export default function ConfirmPage() {
                 BNB Smart Chain
               </span>
             </div>
+            {deal.deliveryMethod && (
+              <>
+                <div className="border-t border-slate-200 my-2" />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-bold text-lg flex items-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    Delivery
+                  </span>
+                  <span className="text-slate-900 font-extrabold capitalize">
+                    {deal.deliveryMethod === 'personal' ? 'Personal Delivery' : deal.deliveryMethod === 'courier' ? 'Courier / Dispatch' : 'Pickup'}
+                  </span>
+                </div>
+              </>
+            )}
+            {deal.deliveryMethod === 'courier' && deal.trackingNumber && (
+              <>
+                <div className="border-t border-slate-200 my-2" />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-bold text-lg flex items-center gap-2">
+                    <Hash className="w-5 h-5" />
+                    Tracking
+                  </span>
+                  <span className="text-blue-700 font-extrabold bg-blue-50 px-3 py-1 rounded-full text-sm">
+                    {deal.trackingNumber}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -318,40 +404,67 @@ export default function ConfirmPage() {
 
             <form onSubmit={handleDispute} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-3">What happened?</label>
-                <textarea
-                  value={disputeReason}
-                  onChange={(e) => setDisputeReason(e.target.value)}
+                <label className="block text-sm font-bold text-slate-700 mb-3">What's the issue?</label>
+                <select
+                  value={disputeCategory}
+                  onChange={(e) => setDisputeCategory(e.target.value)}
                   required
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-slate-900 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 font-medium transition-all appearance-none"
+                >
+                  <option value="">Select a reason...</option>
+                  {DISPUTE_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">Additional Details</label>
+                <textarea
+                  value={disputeDetails}
+                  onChange={(e) => setDisputeDetails(e.target.value)}
                   rows={4}
-                  placeholder="e.g. The item never arrived, wrong color, damaged package..."
+                  placeholder="Provide more details about what happened..."
                   className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 font-medium transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-3">Photo Evidence (Optional)</label>
-                {!photoPreview ? (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <ImagePlus className="w-8 h-8 mb-3 text-slate-400" />
-                      <p className="mb-2 text-sm text-slate-500 font-bold">Click to upload photo</p>
-                      <p className="text-xs text-slate-400">PNG, JPG or JPEG (MAX. 5MB)</p>
+                <label className="block text-sm font-bold text-slate-700 mb-3">
+                  Photo Evidence (Optional — max 3)
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {photoPreviews.map((preview, i) => (
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200">
+                      <img src={preview} alt={`Evidence ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors shadow-sm"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
-                  </label>
-                ) : (
-                  <div className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-slate-200">
-                    <img src={photoPreview} alt="Evidence preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={clearPhoto}
-                      className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-sm"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                  ))}
+                  {photoPreviews.length < 3 && (
+                    <label className="flex flex-col items-center justify-center aspect-square border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors">
+                      <ImagePlus className="w-6 h-6 text-slate-400 mb-1" />
+                      <p className="text-xs text-slate-400 font-bold">Add Photo</p>
+                      <input type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* SLA Notice */}
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-blue-900">SafeTrade Dispute SLA</p>
+                  <p className="text-xs text-blue-700 font-medium mt-1">
+                    Disputes are reviewed within 24 hours. Resolution (refund or release) within 48–72 hours. Your funds stay locked until resolved.
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -364,7 +477,7 @@ export default function ConfirmPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submittingDispute || !disputeReason}
+                  disabled={submittingDispute || !disputeCategory}
                   className="flex-[2] bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-extrabold transition-all shadow-md hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submittingDispute ? (

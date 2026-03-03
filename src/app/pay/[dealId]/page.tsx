@@ -7,6 +7,7 @@ import { getDeal } from '@/lib/firestore';
 import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import TrustScore from '@/components/TrustScore';
+import VendorBadge from '@/components/VendorBadge';
 import { BnbPoweredBadge, BnbPoweredBlock, BnbLogo } from '@/components/BnbChainBadge';
 import {
   Shield,
@@ -20,6 +21,8 @@ import {
   User,
   Mail,
   ExternalLink,
+  HelpCircle,
+  ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
@@ -58,6 +61,7 @@ export default function PayPage() {
 
   // Web3 state
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'web3'>('momo');
+  const [showWhySafeTrade, setShowWhySafeTrade] = useState(false);
   const { open } = useWeb3Modal();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
@@ -366,7 +370,16 @@ export default function PayPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-slate-100">
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Sold securely by</p>
-              <p className="text-lg font-extrabold text-slate-900">{deal.vendorName}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-lg font-extrabold text-slate-900">{deal.vendorName}</p>
+                {vendor && (
+                  <VendorBadge
+                    successfulTrades={vendor.successfulTrades}
+                    trustScore={vendor.trustScore}
+                    verified={vendor.verified}
+                  />
+                )}
+              </div>
             </div>
             {vendor && (
               <div className="scale-105 origin-left sm:origin-right">
@@ -508,6 +521,50 @@ export default function PayPage() {
                   )}
                 </button>
               </>
+            )}
+          </div>
+        )}
+
+        {/* Why SafeTrade for MoMo? */}
+        {paymentMethod === 'momo' && (
+          <div className="mt-6">
+            <button
+              onClick={() => setShowWhySafeTrade(!showWhySafeTrade)}
+              className="w-full flex items-center justify-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 py-3 transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" />
+              Why use SafeTrade instead of sending MoMo directly?
+              <ChevronDown className={`w-4 h-4 transition-transform ${showWhySafeTrade ? 'rotate-180' : ''}`} />
+            </button>
+            {showWhySafeTrade && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 mt-3 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">Your money is held securely</p>
+                    <p className="text-xs text-slate-600 mt-1">When you send MoMo directly, it's gone instantly. With SafeTrade, your money stays locked until you confirm you received your item.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">No more fake payment screenshots</p>
+                    <p className="text-xs text-slate-600 mt-1">Vendors see verified payment in their dashboard. Buyers get proof their money is in escrow. No he-said-she-said.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">72-hour protection window</p>
+                    <p className="text-xs text-slate-600 mt-1">If the vendor doesn't deliver within 72 hours or sends the wrong item, our team steps in and refunds your money.</p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-emerald-100">
+                  <p className="text-xs font-bold text-slate-700 text-center">
+                    Works with MTN MoMo • Vodafone Cash • AirtelTigo Money • Visa/Mastercard
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         )}

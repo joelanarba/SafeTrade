@@ -5,10 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import TrustScore from '@/components/TrustScore';
+import VendorBadge from '@/components/VendorBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
 import ShareLink from '@/components/ShareLink';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
-import { Deal } from '@/lib/types';
+import { Deal, DeliveryMethod } from '@/lib/types';
 import {
   Plus,
   ExternalLink,
@@ -22,6 +23,8 @@ import {
   CheckCircle,
   Pencil,
   Trash2,
+  Truck,
+  Globe,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -56,6 +59,8 @@ function DashboardContent() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [phone, setPhone] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('personal');
+  const [trackingNumber, setTrackingNumber] = useState('');
 
   useEffect(() => {
     if (user) loadDeals();
@@ -89,7 +94,9 @@ function DashboardContent() {
         phone,
         itemName,
         description,
-        amount
+        amount,
+        deliveryMethod,
+        deliveryMethod === 'courier' ? trackingNumber : ''
       );
       setDeals((prev) => [deal, ...prev]);
       setShowCreateModal(false);
@@ -97,6 +104,8 @@ function DashboardContent() {
       setDescription('');
       setPrice('');
       setPhone('');
+      setDeliveryMethod('personal');
+      setTrackingNumber('');
       toast.success('Deal created! Share the payment link with your buyer.');
     } catch (err) {
       console.error(err);
@@ -238,8 +247,15 @@ function DashboardContent() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3 flex-wrap">
               Welcome, {vendor?.displayName || 'Vendor'}
+              {vendor && (
+                <VendorBadge 
+                  successfulTrades={vendor.successfulTrades}
+                  trustScore={vendor.trustScore}
+                  verified={vendor.verified}
+                />
+              )}
             </h1>
             <p className="text-slate-500 text-base mt-2 font-medium">Manage your protected deals and track payouts.</p>
           </div>
@@ -321,6 +337,39 @@ function DashboardContent() {
             </div>
             <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-3">Trust Score</p>
           </div>
+        </div>
+
+        {/* Works Everywhere Section */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 mb-10">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+              <Globe className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Works Everywhere</h3>
+              <p className="text-sm text-slate-500 font-medium">Share your payment links on any platform</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {[
+              { name: 'WhatsApp', color: 'bg-[#25D366]/10 text-[#25D366] border-[#25D366]/20' },
+              { name: 'Instagram', color: 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-pink-600 border-pink-500/20' },
+              { name: 'X (Twitter)', color: 'bg-slate-900/5 text-slate-900 border-slate-900/10' },
+              { name: 'TikTok', color: 'bg-slate-900/5 text-slate-800 border-slate-900/10' },
+              { name: 'Facebook', color: 'bg-[#1877F2]/10 text-[#1877F2] border-[#1877F2]/20' },
+              { name: 'Telegram', color: 'bg-[#0088cc]/10 text-[#0088cc] border-[#0088cc]/20' },
+            ].map((platform) => (
+              <span
+                key={platform.name}
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border ${platform.color}`}
+              >
+                {platform.name}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 font-medium mt-4">
+            Your SafeTrade payment links generate rich previews with item name, price, and your trust score when shared.
+          </p>
         </div>
 
         {/* Deals List */}
@@ -570,6 +619,35 @@ function DashboardContent() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Delivery Method</label>
+                <div className="relative">
+                  <Truck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <select
+                    value={deliveryMethod}
+                    onChange={(e) => setDeliveryMethod(e.target.value as DeliveryMethod)}
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl pl-10 pr-4 py-3.5 text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all appearance-none"
+                  >
+                    <option value="personal">Personal Delivery</option>
+                    <option value="courier">Courier / Dispatch</option>
+                    <option value="pickup">Pickup</option>
+                  </select>
+                </div>
+              </div>
+
+              {deliveryMethod === 'courier' && (
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Tracking Number (Optional)</label>
+                  <input
+                    type="text"
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    placeholder="e.g. GH-12345678"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
+                  />
+                </div>
+              )}
 
               {price && parseFloat(price) > 0 && (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">

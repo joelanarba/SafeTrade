@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Deal, Vendor } from './types';
+import { Deal, Vendor, DeliveryMethod } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 // ===== Deal Operations =====
@@ -24,7 +24,9 @@ export async function createDeal(
   vendorPhone: string,
   itemName: string,
   description: string,
-  amountGHS: number
+  amountGHS: number,
+  deliveryMethod?: DeliveryMethod,
+  trackingNumber?: string
 ): Promise<Deal> {
   const dealId = uuidv4();
   const confirmationToken = uuidv4();
@@ -53,6 +55,8 @@ export async function createDeal(
     disputeReason: '',
     disputePhoto: '',
     confirmationToken,
+    deliveryMethod: deliveryMethod || 'personal',
+    trackingNumber: trackingNumber || '',
   };
 
   await setDoc(doc(db, 'deals', dealId), deal);

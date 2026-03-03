@@ -20,7 +20,13 @@ export interface Deal {
   disputeReason: string;
   disputePhoto: string;
   confirmationToken: string;
+  deliveryMethod?: DeliveryMethod;
+  trackingNumber?: string;
+  disputeCategory?: string;
+  disputePhotos?: string[];
 }
+
+export type DeliveryMethod = 'personal' | 'courier' | 'pickup';
 
 export type DealStatus =
   | 'pending_payment'
