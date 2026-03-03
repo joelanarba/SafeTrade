@@ -32,14 +32,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Deal is not in escrow' }, { status: 400 });
     }
 
-    // Release escrow on blockchain
+    // Release escrow on blockchain (non-blocking — deal completes regardless)
     let releaseTxHash = '';
     try {
       releaseTxHash = await releaseEscrow(dealId);
       console.log('Escrow released with tx:', releaseTxHash);
     } catch (err) {
-      console.error('Release failed:', err);
-      return NextResponse.json({ error: 'Blockchain release failed' }, { status: 500 });
+      console.error('Blockchain release failed (non-blocking):', err);
+      // Continue — the deal still completes; admin can manually release later
     }
 
     // Update deal status
