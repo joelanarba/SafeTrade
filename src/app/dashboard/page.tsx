@@ -47,6 +47,8 @@ function DashboardContent() {
   const [editPrice, setEditPrice] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; dealId: string; itemName: string } | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
@@ -106,6 +108,7 @@ function DashboardContent() {
 
   async function handleCancelDeal(dealId: string) {
     if (!user) return;
+    setConfirmAction(null);
     setCancellingDealId(dealId);
     try {
       const token = await user.getIdToken();
@@ -131,6 +134,7 @@ function DashboardContent() {
 
   async function handleDeleteDeal(dealId: string) {
     if (!user) return;
+    setConfirmAction(null);
     setDeletingDealId(dealId);
     try {
       const token = await user.getIdToken();
@@ -424,7 +428,7 @@ function DashboardContent() {
                             <span className="hidden sm:inline">Edit</span>
                           </button>
                           <button
-                            onClick={() => handleCancelDeal(deal.id)}
+                            onClick={() => setConfirmAction({ type: 'cancel', dealId: deal.id, itemName: deal.itemName })}
                             disabled={cancellingDealId === deal.id}
                             className="bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-amber-200 shadow-sm disabled:opacity-50"
                           >
@@ -436,7 +440,7 @@ function DashboardContent() {
                             <span className="hidden sm:inline">Cancel</span>
                           </button>
                           <button
-                            onClick={() => handleDeleteDeal(deal.id)}
+                            onClick={() => setConfirmAction({ type: 'delete', dealId: deal.id, itemName: deal.itemName })}
                             disabled={deletingDealId === deal.id}
                             className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-red-200 shadow-sm disabled:opacity-50"
                           >
@@ -469,7 +473,7 @@ function DashboardContent() {
                       )}
                       {(deal.status === 'cancelled') && (
                         <button
-                          onClick={() => handleDeleteDeal(deal.id)}
+                          onClick={() => setConfirmAction({ type: 'delete', dealId: deal.id, itemName: deal.itemName })}
                           disabled={deletingDealId === deal.id}
                           className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-red-200 shadow-sm disabled:opacity-50"
                         >
@@ -683,6 +687,55 @@ function DashboardContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-8 relative shadow-2xl">
+            <div className="text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 ${
+                confirmAction.type === 'delete' ? 'bg-red-100' : 'bg-amber-100'
+              }`}>
+                {confirmAction.type === 'delete' ? (
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                ) : (
+                  <XCircle className="w-8 h-8 text-amber-600" />
+                )}
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">
+                {confirmAction.type === 'delete' ? 'Delete Deal?' : 'Cancel Deal?'}
+              </h3>
+              <p className="text-sm text-slate-500 font-medium mb-6">
+                {confirmAction.type === 'delete'
+                  ? `"${confirmAction.itemName}" will be permanently removed.`
+                  : `"${confirmAction.itemName}" will be cancelled and the payment link will stop working.`
+                }
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-2xl font-bold text-sm transition-all"
+                >
+                  Go Back
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirmAction.type === 'delete') handleDeleteDeal(confirmAction.dealId);
+                    else handleCancelDeal(confirmAction.dealId);
+                  }}
+                  className={`flex-1 py-3.5 rounded-2xl font-bold text-sm text-white transition-all ${
+                    confirmAction.type === 'delete'
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-amber-600 hover:bg-amber-700'
+                  }`}
+                >
+                  {confirmAction.type === 'delete' ? 'Yes, Delete' : 'Yes, Cancel'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
