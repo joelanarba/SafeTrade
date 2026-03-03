@@ -353,6 +353,20 @@ function DashboardContent() {
                           />
                         </>
                       )}
+                      {deal.status === 'in_escrow' && deal.confirmationToken && (
+                        <button
+                          onClick={() => {
+                            const url = `${window.location.origin}/confirm/${deal.confirmationToken}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Confirmation link copied! Send it to your buyer.');
+                          }}
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-emerald-200 shadow-sm"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="hidden sm:inline">Copy Buyer Link</span>
+                          <span className="sm:hidden">Link</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
