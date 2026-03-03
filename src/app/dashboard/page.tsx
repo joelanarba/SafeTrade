@@ -20,6 +20,8 @@ import {
   Search,
   XCircle,
   CheckCircle,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -38,6 +40,12 @@ function DashboardContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [cancellingDealId, setCancellingDealId] = useState<string | null>(null);
+  const [deletingDealId, setDeletingDealId] = useState<string | null>(null);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -98,18 +106,17 @@ function DashboardContent() {
 
   async function handleCancelDeal(dealId: string) {
     if (!user) return;
+    if (!confirm('Cancel this deal? The payment link will no longer work.')) return;
     setCancellingDealId(dealId);
     try {
       const token = await user.getIdToken();
       const res = await fetch(`/api/deals/${dealId}/cancel`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (res.ok) {
-        toast.success('Deal cancelled successfully.');
+        toast.success('Deal cancelled.');
         setDeals(deals.map(d => d.id === dealId ? { ...d, status: 'cancelled' as any } : d));
       } else {
         const data = await res.json();
@@ -120,6 +127,83 @@ function DashboardContent() {
       toast.error('Error cancelling deal');
     } finally {
       setCancellingDealId(null);
+    }
+  }
+
+  async function handleDeleteDeal(dealId: string) {
+    if (!user) return;
+    if (!confirm('Permanently delete this deal? This cannot be undone.')) return;
+    setDeletingDealId(dealId);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/deals/${dealId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        toast.success('Deal deleted.');
+        setDeals(deals.filter(d => d.id !== dealId));
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to delete deal');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error deleting deal');
+    } finally {
+      setDeletingDealId(null);
+    }
+  }
+
+  function openEditModal(deal: Deal) {
+    setEditingDeal(deal);
+    setEditName(deal.itemName);
+    setEditDesc(deal.description);
+    setEditPrice(deal.amountGHS.toString());
+  }
+
+  async function handleEditDeal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user || !editingDeal) return;
+    setSaving(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/deals/${editingDeal.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemName: editName,
+          description: editDesc,
+          price: editPrice,
+        }),
+      });
+
+      if (res.ok) {
+        const amount = parseFloat(editPrice);
+        const fee = Math.round(amount * 0.02 * 100) / 100;
+        setDeals(deals.map(d => d.id === editingDeal.id ? {
+          ...d,
+          itemName: editName,
+          description: editDesc,
+          amountGHS: amount,
+          platformFee: fee,
+          vendorPayout: Math.round((amount - fee) * 100) / 100,
+        } : d));
+        setEditingDeal(null);
+        toast.success('Deal updated.');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update deal');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error updating deal');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -335,16 +419,35 @@ function DashboardContent() {
                       {deal.status === 'pending_payment' && (
                         <>
                           <button
+                            onClick={() => openEditModal(deal)}
+                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-blue-200 shadow-sm"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Edit</span>
+                          </button>
+                          <button
                             onClick={() => handleCancelDeal(deal.id)}
                             disabled={cancellingDealId === deal.id}
-                            className="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-slate-200 hover:border-red-200 shadow-sm disabled:opacity-50"
+                            className="bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-amber-200 shadow-sm disabled:opacity-50"
                           >
                             {cancellingDealId === deal.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-3.5 h-3.5" />
                             )}
                             <span className="hidden sm:inline">Cancel</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDeal(deal.id)}
+                            disabled={deletingDealId === deal.id}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-red-200 shadow-sm disabled:opacity-50"
+                          >
+                            {deletingDealId === deal.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                            <span className="hidden sm:inline">Delete</span>
                           </button>
                           <ShareLink 
                             url={getPaymentUrl(deal.id)} 
@@ -360,11 +463,24 @@ function DashboardContent() {
                             navigator.clipboard.writeText(url);
                             toast.success('Confirmation link copied! Send it to your buyer.');
                           }}
-                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-emerald-200 shadow-sm"
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-emerald-200 shadow-sm"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                          <span className="hidden sm:inline">Copy Buyer Link</span>
-                          <span className="sm:hidden">Link</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Copy Buyer Link
+                        </button>
+                      )}
+                      {(deal.status === 'cancelled') && (
+                        <button
+                          onClick={() => handleDeleteDeal(deal.id)}
+                          disabled={deletingDealId === deal.id}
+                          className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-red-200 shadow-sm disabled:opacity-50"
+                        >
+                          {deletingDealId === deal.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                          <span className="hidden sm:inline">Delete</span>
                         </button>
                       )}
                     </div>
@@ -474,6 +590,100 @@ function DashboardContent() {
                 {creating && <Loader2 className="w-5 h-5 animate-spin" />}
                 Generate Payment Link
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Deal Modal */}
+      {editingDeal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 p-4 sm:p-0">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 sm:p-10 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setEditingDeal(null)}
+              className="absolute top-6 right-6 w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mb-8">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-5">
+                <Pencil className="w-6 h-6 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">Edit Deal</h2>
+              <p className="text-base font-medium text-slate-500">
+                Update the details for this deal. Changes apply immediately.
+              </p>
+            </div>
+
+            <form onSubmit={handleEditDeal} className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Item Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Description</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  rows={3}
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Price (GHS)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₵</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    required
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl pl-10 pr-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
+                  />
+                </div>
+              </div>
+
+              {editPrice && parseFloat(editPrice) > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">
+                  <div className="flex justify-between text-sm font-medium text-slate-500 mb-2">
+                    <span>Platform Fee (2%)</span>
+                    <span>₵{(parseFloat(editPrice) * 0.02).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                    <span>You Receive</span>
+                    <span className="text-emerald-600">₵{(parseFloat(editPrice) * 0.98).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setEditingDeal(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-4 rounded-2xl font-bold text-base transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-base transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving && <Loader2 className="w-5 h-5 animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
             </form>
           </div>
         </div>
