@@ -106,7 +106,6 @@ function DashboardContent() {
 
   async function handleCancelDeal(dealId: string) {
     if (!user) return;
-    if (!confirm('Cancel this deal? The payment link will no longer work.')) return;
     setCancellingDealId(dealId);
     try {
       const token = await user.getIdToken();
@@ -132,7 +131,6 @@ function DashboardContent() {
 
   async function handleDeleteDeal(dealId: string) {
     if (!user) return;
-    if (!confirm('Permanently delete this deal? This cannot be undone.')) return;
     setDeletingDealId(dealId);
     try {
       const token = await user.getIdToken();
