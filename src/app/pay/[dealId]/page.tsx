@@ -107,7 +107,7 @@ export default function PayPage() {
       email: buyerEmail,
       amount: Math.round(deal.amountGHS * 100),
       currency: 'GHS',
-      ref: Date.now().toString() + Math.random().toString(36).substring(7),
+      reference: Date.now().toString() + Math.random().toString(36).substring(7),
       metadata: {
         dealId: deal.id,
         buyerName,
@@ -128,20 +128,15 @@ export default function PayPage() {
 
   async function verifyPayment(reference: string) {
     try {
-      const res = await fetch('/api/paystack/webhook', {
+      const res = await fetch('/api/paystack/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          event: 'charge.success',
-          data: {
-            reference,
-            metadata: {
-              dealId: deal?.id,
-              buyerName,
-              buyerPhone,
-              buyerEmail,
-            },
-          },
+          reference,
+          dealId: deal?.id,
+          buyerName,
+          buyerPhone,
+          buyerEmail,
         }),
       });
 

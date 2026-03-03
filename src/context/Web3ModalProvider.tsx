@@ -18,7 +18,7 @@ const bnbTestnet = {
 const metadata = {
   name: 'SafeTrade Ghana',
   description: 'SafeTrade Ghana — The Trust Layer for Africa’s Social Commerce Economy',
-  url: 'http://localhost:3000', 
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://safetrade-africa.vercel.app', 
   icons: ['https://avatars.githubusercontent.com/u/37784886']
 };
 
