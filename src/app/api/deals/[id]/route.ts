@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: dealId } = await params;
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -11,7 +12,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await adminAuth.verifyIdToken(token);
     const uid = decodedToken.uid;
-    const dealId = params.id;
 
     const dealRef = adminDb.collection('deals').doc(dealId);
     const dealSnap = await dealRef.get();
@@ -26,7 +26,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Only allow deleting pending or cancelled deals
     if (!['pending_payment', 'cancelled'].includes(deal?.status)) {
       return NextResponse.json({ error: 'Only pending or cancelled deals can be deleted' }, { status: 400 });
     }
@@ -39,8 +38,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: dealId } = await params;
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,7 +49,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await adminAuth.verifyIdToken(token);
     const uid = decodedToken.uid;
-    const dealId = params.id;
 
     const { itemName, description, price } = await req.json();
 

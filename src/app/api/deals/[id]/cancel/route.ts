@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: dealId } = await params;
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,7 +18,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const uid = decodedToken.uid;
-    const dealId = params.id;
 
     if (!dealId) {
       return NextResponse.json({ error: 'Missing deal ID' }, { status: 400 });
@@ -32,12 +32,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const deal = dealSnap.data();
 
-    // Verify ownership
     if (deal?.vendorId !== uid) {
       return NextResponse.json({ error: 'Unauthorized to cancel this deal' }, { status: 403 });
     }
 
-    // Only pending_payment deals can be cancelled
     if (deal?.status !== 'pending_payment') {
       return NextResponse.json({ error: 'Only pending deals can be cancelled' }, { status: 400 });
     }
