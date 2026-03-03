@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { dealId, confirmationToken, reason, photoUrl, category, photoUrls, details } = body;
 
-    if (!dealId || !confirmationToken || (!reason && !details)) {
+    if (!dealId || !confirmationToken || (!reason && !details && !category)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -69,20 +69,18 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Send dispute alerts
+    // Send dispute alerts (non-blocking)
     try {
-      // Alert vendor
       const vendorSnap2 = await adminDb.collection('vendors').doc(deal.vendorId).get();
       if (vendorSnap2.exists) {
         const vendor = vendorSnap2.data()!;
         if (vendor.email) {
-          await sendDisputeAlert(vendor.email, vendor.displayName, deal.itemName, reason, true);
+          await sendDisputeAlert(vendor.email, vendor.displayName, deal.itemName, fullReason, true);
         }
       }
 
-      // Alert buyer
       if (deal.buyerEmail) {
-        await sendDisputeAlert(deal.buyerEmail, deal.buyerName, deal.itemName, reason, false);
+        await sendDisputeAlert(deal.buyerEmail, deal.buyerName, deal.itemName, fullReason, false);
       }
     } catch (emailErr) {
       console.error('Email error (non-critical):', emailErr);
