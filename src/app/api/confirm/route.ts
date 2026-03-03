@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { releaseEscrow } from '@/lib/escrow';
+import { createTransferRecipient, initiateTransfer, MOMO_BANK_CODES } from '@/lib/paystack';
+import { v4 as uuidv4 } from 'uuid';
 
-// POST: Buyer confirms receipt — triggers fund release
+// POST: Buyer confirms receipt — triggers fund release + MoMo payout
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -34,7 +36,6 @@ export async function POST(req: NextRequest) {
     let releaseTxHash = '';
     try {
       releaseTxHash = await releaseEscrow(dealId);
-      // releaseTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
       console.log('Escrow released with tx:', releaseTxHash);
     } catch (err) {
       console.error('Release failed:', err);
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
     const vendorRef = adminDb.collection('vendors').doc(deal.vendorId);
     const vendorSnap = await vendorRef.get();
 
+    let payoutStatus = 'skipped';
+    let payoutError = '';
+
     if (vendorSnap.exists) {
       const vendor = vendorSnap.data()!;
       const newSuccessful = (vendor.successfulTrades || 0) + 1;
@@ -64,12 +68,81 @@ export async function POST(req: NextRequest) {
         trustScore: newTrustScore,
         verified: newSuccessful >= 10,
       });
+
+      // P1-5: Initiate MoMo payout to vendor
+      if (vendor.momoNumber && vendor.momoProvider) {
+        try {
+          const bankCode = MOMO_BANK_CODES[vendor.momoProvider];
+          if (!bankCode) {
+            throw new Error(`Unknown MoMo provider: ${vendor.momoProvider}`);
+          }
+
+          // Step 1: Create transfer recipient
+          const recipientRes = await createTransferRecipient({
+            name: vendor.displayName || 'Vendor',
+            account_number: vendor.momoNumber,
+            bank_code: bankCode,
+            currency: 'GHS',
+          });
+
+          if (!recipientRes.status || !recipientRes.data?.recipient_code) {
+            throw new Error(
+              `Failed to create transfer recipient: ${recipientRes.message || JSON.stringify(recipientRes)}`
+            );
+          }
+
+          const recipientCode = recipientRes.data.recipient_code;
+
+          // Step 2: Initiate transfer (vendorPayout in pesewas)
+          const transferRef = `payout-${dealId}-${uuidv4().slice(0, 8)}`;
+          const payoutAmountPesewas = Math.round(deal.vendorPayout * 100);
+
+          const transferRes = await initiateTransfer({
+            amount: payoutAmountPesewas,
+            recipient: recipientCode,
+            reason: `SafeTrade payout for: ${deal.itemName}`,
+            reference: transferRef,
+          });
+
+          if (!transferRes.status) {
+            throw new Error(
+              `Transfer failed: ${transferRes.message || JSON.stringify(transferRes)}`
+            );
+          }
+
+          payoutStatus = 'initiated';
+          console.log(
+            `MoMo payout initiated: GHS ${deal.vendorPayout} to ${vendor.momoNumber} (${vendor.momoProvider}), ref: ${transferRef}`
+          );
+
+          // Save payout reference on the deal
+          await dealRef.update({
+            payoutReference: transferRef,
+            payoutStatus: 'initiated',
+          });
+        } catch (payoutErr) {
+          payoutError = payoutErr instanceof Error ? payoutErr.message : String(payoutErr);
+          payoutStatus = 'failed';
+          console.error('MoMo payout failed (non-blocking):', payoutErr);
+
+          // Save the failure so admin can retry
+          await dealRef.update({
+            payoutStatus: 'failed',
+            payoutError,
+          });
+        }
+      } else {
+        payoutStatus = 'skipped_no_momo';
+        console.log(`Vendor ${deal.vendorId} has no MoMo configured — payout skipped`);
+      }
     }
 
-    // TODO: Initiate Paystack transfer to vendor's MoMo number
-    // This would use createTransferRecipient + initiateTransfer from paystack.ts
-
-    return NextResponse.json({ message: 'Delivery confirmed, funds released', releaseTxHash });
+    return NextResponse.json({
+      message: 'Delivery confirmed, funds released',
+      releaseTxHash,
+      payoutStatus,
+      ...(payoutError ? { payoutError } : {}),
+    });
   } catch (error) {
     console.error('Confirm error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

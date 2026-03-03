@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Shield, ArrowRight, Lock, CheckCircle, Banknote, TrendingUp, Users, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
+import { getTotalDealsCount } from '@/lib/firestore';
 
 export default function Home() {
   const [dealCount, setDealCount] = useState(0);
@@ -11,21 +12,30 @@ export default function Home() {
 
   useEffect(() => {
     setIsVisible(true);
-    // Animate count up
-    const target = 1247; // Demo number, replace with real Firestore count
-    const duration = 2000;
-    const step = target / (duration / 16);
-    let current = 0;
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= target) {
-        setDealCount(target);
-        clearInterval(timer);
-      } else {
-        setDealCount(Math.floor(current));
-      }
-    }, 16);
-    return () => clearInterval(timer);
+
+    // Fetch real deal count from Firestore
+    getTotalDealsCount()
+      .then((count) => {
+        // Animate count up to real number
+        const target = count;
+        if (target === 0) return;
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= target) {
+            setDealCount(target);
+            clearInterval(timer);
+          } else {
+            setDealCount(Math.floor(current));
+          }
+        }, 16);
+        return () => clearInterval(timer);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch deal count:', err);
+      });
   }, []);
 
   return (
@@ -236,7 +246,7 @@ export default function Home() {
             </span>
           </div>
           <a
-            href="https://testnet.bscscan.com/address/0x350454F23D259Ea42cE4D6D1Eb2b41207b8fAD32"
+            href="https://testnet.bscscan.com/address/0xF246Ed2E6832768df984150aE3dbb860819bED8D"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm hover:border-[#F3BA2F]/30 hover:bg-[#FEF9E7] hover:text-[#C99400] transition-all"

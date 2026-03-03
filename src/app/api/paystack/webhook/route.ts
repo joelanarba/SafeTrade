@@ -2,13 +2,39 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/paystack';
 import { sendPaymentConfirmation, sendVendorNotification } from '@/lib/email';
-// import { lockEscrow } from '@/lib/escrow';
-// import { ethers } from 'ethers';
+import { lockEscrow } from '@/lib/escrow';
+import { ethers } from 'ethers';
+import crypto from 'crypto';
+
+const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || '';
+
+/**
+ * Verify the Paystack webhook signature using HMAC SHA-512.
+ * Returns true if the signature is valid, false otherwise.
+ */
+function verifyPaystackSignature(body: string, signature: string | null): boolean {
+  if (!signature || !PAYSTACK_SECRET) return false;
+  const hash = crypto
+    .createHmac('sha512', PAYSTACK_SECRET)
+    .update(body)
+    .digest('hex');
+  return hash === signature;
+}
 
 // Paystack webhook handler
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    const signature = req.headers.get('x-paystack-signature');
+
+    // P0-2: Verify Paystack webhook signature
+    if (!verifyPaystackSignature(rawBody, signature)) {
+      console.error('Invalid Paystack webhook signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
     const { event, data } = body;
 
     // Only process successful charges
@@ -23,12 +49,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing dealId' }, { status: 400 });
     }
 
-    // Verify payment with Paystack
+    // P0-3: Verify payment with Paystack — reject if verification fails
     const verification = await verifyPayment(reference);
     if (!verification || verification.data?.status !== 'success') {
-      console.log('Payment verification skipped or failed. Continuing for test purposes.');
-      // In production, you'd return an error here:
-      // return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
+      console.error('Payment verification failed for reference:', reference);
+      return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
     }
 
     // Get the deal
@@ -41,12 +66,27 @@ export async function POST(req: NextRequest) {
 
     const deal = dealSnap.data()!;
 
-    // Lock escrow on blockchain
+    // P0-1: Lock escrow on blockchain for real
     let escrowTxHash = '';
-    // const amountWei = ethers.parseEther((deal.amountGHS / 10000).toString()); // Symbolic amount
-    // escrowTxHash = await lockEscrow(dealId, '0x0000000000000000000000000000000000000000', amountWei);
-    escrowTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-    console.log('Escrow locked with tx:', escrowTxHash);
+    try {
+      // Convert GHS amount to a symbolic BNB wei amount (GHS / 10000 as BNB)
+      const symbolicBnb = (deal.amountGHS / 10000).toFixed(18);
+      const amountWei = ethers.parseEther(symbolicBnb);
+
+      // Get vendor's wallet address — use contract owner as fallback
+      const vendorSnap = await adminDb.collection('vendors').doc(deal.vendorId).get();
+      const vendorWallet = vendorSnap.exists && vendorSnap.data()?.walletAddress
+        ? vendorSnap.data()!.walletAddress
+        : process.env.ESCROW_VENDOR_FALLBACK_ADDRESS || '0x0000000000000000000000000000000000000001';
+
+      escrowTxHash = await lockEscrow(dealId, vendorWallet, amountWei);
+      console.log('Escrow locked on-chain with tx:', escrowTxHash);
+    } catch (escrowErr) {
+      console.error('Blockchain escrow lock failed:', escrowErr);
+      // Still proceed — payment was successful, we store it offline
+      // Generate a placeholder so the deal isn't stuck, but log the failure
+      escrowTxHash = '';
+    }
 
     // Update deal with payment info
     await dealRef.update({

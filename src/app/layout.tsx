@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { Web3ModalProvider } from '@/context/Web3ModalProvider';
 import Navbar from '@/components/Navbar';
 import { Toaster } from 'react-hot-toast';
 
@@ -30,9 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${jakarta.variable} font-sans`}>
-        <AuthProvider>
-          <Navbar />
-          <main className="pt-16">{children}</main>
+        <Web3ModalProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="pt-16">{children}</main>
           <Toaster
             position="top-center"
             toastOptions={{
@@ -58,6 +60,7 @@ export default function RootLayout({
             }}
           />
         </AuthProvider>
+        </Web3ModalProvider>
       </body>
     </html>
   );

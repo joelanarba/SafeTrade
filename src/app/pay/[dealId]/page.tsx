@@ -22,6 +22,15 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { BrowserProvider, Contract, parseUnits } from 'ethers';
+import contractABI from '@/lib/contract-abi.json';
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
+  "function balanceOf(address account) external view returns (uint256)"
+];
 
 declare global {
   interface Window {
@@ -45,6 +54,12 @@ export default function PayPage() {
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+
+  // Web3 state
+  const [paymentMethod, setPaymentMethod] = useState<'momo' | 'web3'>('momo');
+  const { open } = useWeb3Modal();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
 
   useEffect(() => {
     loadDeal();
@@ -139,6 +154,78 @@ export default function PayPage() {
     } catch (err) {
       console.error(err);
       toast.error('Error processing payment');
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  async function handleWeb3Pay() {
+    if (!deal || !buyerName || !buyerPhone || !buyerEmail) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!isConnected || !walletProvider) {
+      open();
+      return;
+    }
+
+    setPaying(true);
+
+    try {
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
+
+      const escrowAddress = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!;
+      const usdtAddress = process.env.NEXT_PUBLIC_MOCK_USDT_ADDRESS!;
+      const fallbackVendor = process.env.NEXT_PUBLIC_ESCROW_VENDOR_FALLBACK_ADDRESS!;
+
+      const usdt = new Contract(usdtAddress, ERC20_ABI, signer);
+      const escrow = new Contract(escrowAddress, contractABI, signer);
+
+      // Testing: 1-to-1 conversion for USDT (mocking exchange rate)
+      const amountWei = parseUnits(deal.amountGHS.toString(), 18);
+
+      // Approve
+      const allowance = await usdt.allowance(address, escrowAddress);
+      if (allowance < amountWei) {
+        toast.loading('Approving USDT...', { id: 'web3-appr' });
+        const txApprove = await usdt.approve(escrowAddress, amountWei);
+        await txApprove.wait();
+        toast.dismiss('web3-appr');
+      }
+
+      // Lock Escrow
+      toast.loading('Confirming payment on chain...', { id: 'web3-pay' });
+      const vendorAddress = vendor?.walletAddress || fallbackVendor;
+
+      const tx = await escrow.createEscrow(deal.id, vendorAddress, amountWei);
+      const receipt = await tx.wait();
+      toast.dismiss('web3-pay');
+
+      // Verify on backend
+      const res = await fetch('/api/web3/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txHash: receipt.hash,
+          dealId: deal.id,
+          buyerName,
+          buyerPhone,
+          buyerEmail,
+        }),
+      });
+
+      if (res.ok) {
+        setPaid(true);
+        toast.success('Payment successful! Your USDT is in escrow.');
+      } else {
+        toast.error('Payment verification failed.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.dismiss();
+      toast.error(err.shortMessage || err.message || 'Error processing Web3 payment');
     } finally {
       setPaying(false);
     }
@@ -335,24 +422,85 @@ export default function PayPage() {
           </div>
         </div>
 
-        {/* Pay Button */}
-        <button
-          onClick={handlePay}
-          disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
-        >
-          {paying ? (
-            <>
-              <Loader2 className="w-6 h-6 animate-spin" />
-              Processing Securely...
-            </>
-          ) : (
-            <>
-              <Lock className="w-6 h-6" />
-              Pay ₵{deal.amountGHS.toFixed(2)} Securely
-            </>
-          )}
-        </button>
+        {/* Payment Method Toggle */}
+        <div className="bg-slate-100 p-1.5 rounded-2xl flex mb-8">
+          <button
+            onClick={() => setPaymentMethod('momo')}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+              paymentMethod === 'momo'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Pay with MoMo/Card (GHS)
+          </button>
+          <button
+            onClick={() => setPaymentMethod('web3')}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+              paymentMethod === 'web3'
+                ? 'bg-white text-emerald-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Pay with USDT (Web3)
+          </button>
+        </div>
+
+        {/* Selected Pay Button */}
+        {paymentMethod === 'momo' ? (
+          <button
+            onClick={handlePay}
+            disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
+          >
+            {paying ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                Processing Securely...
+              </>
+            ) : (
+              <>
+                <Lock className="w-6 h-6" />
+                Pay ₵{deal.amountGHS.toFixed(2)} Securely
+              </>
+            )}
+          </button>
+        ) : (
+          <div className="space-y-4">
+            {!isConnected ? (
+              <button
+                onClick={() => open()}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-md hover-lift flex items-center justify-center gap-3 tracking-tight"
+              >
+                Connect Wallet to Pay USDT
+              </button>
+            ) : (
+              <>
+                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl">
+                  <span>Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                  <button onClick={() => open()} className="text-emerald-600 hover:underline">Change</button>
+                </div>
+                <button
+                  onClick={handleWeb3Pay}
+                  disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
+                >
+                  {paying ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Executing Contract...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-6 h-6" />
+                      Approve & Pay {(deal.amountGHS * 1).toFixed(2)} USDT
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Trust Section */}
         {/* Trust Section with BNB branding */}

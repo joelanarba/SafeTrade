@@ -16,9 +16,10 @@ import {
   TrendingUp,
   Loader2,
   X,
-  CheckCircle,
   Banknote,
   Search,
+  XCircle,
+  CheckCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -36,6 +37,9 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [cancellingDealId, setCancellingDealId] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [itemName, setItemName] = useState('');
@@ -92,6 +96,33 @@ function DashboardContent() {
     }
   }
 
+  async function handleCancelDeal(dealId: string) {
+    if (!user) return;
+    setCancellingDealId(dealId);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/deals/${dealId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        toast.success('Deal cancelled successfully.');
+        setDeals(deals.map(d => d.id === dealId ? { ...d, status: 'cancelled' as any } : d));
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to cancel deal');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error cancelling deal');
+    } finally {
+      setCancellingDealId(null);
+    }
+  }
+
   const getPaymentUrl = (dealId: string) => {
     if (typeof window !== 'undefined') {
       return `${window.location.origin}/pay/${dealId}`;
@@ -105,6 +136,15 @@ function DashboardContent() {
 
   const activeDeals = deals.filter((d) => !['completed', 'refunded'].includes(d.status));
   const completedDeals = deals.filter((d) => d.status === 'completed');
+
+  const filteredDeals = deals.filter((d) => {
+    const term = searchQuery.toLowerCase();
+    return (
+      d.itemName.toLowerCase().includes(term) ||
+      (d.buyerName && d.buyerName.toLowerCase().includes(term)) ||
+      d.status.toLowerCase().replace('_', ' ').includes(term)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-24 sm:py-32">
@@ -125,6 +165,25 @@ function DashboardContent() {
             Create New Deal
           </button>
         </div>
+
+        {/* MoMo Setup Prompt */}
+        {vendor && !vendor.momoNumber && (
+          <a
+            href="/settings"
+            className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 hover:bg-amber-100/60 transition-colors group"
+          >
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Banknote className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-amber-900 text-sm">Set up your Mobile Money payout</p>
+              <p className="text-amber-700 text-xs font-medium mt-0.5">
+                Add your MoMo number in Settings to receive instant payouts when buyers confirm delivery.
+              </p>
+            </div>
+            <span className="text-amber-600 text-sm font-bold group-hover:translate-x-1 transition-transform">→</span>
+          </a>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -186,6 +245,8 @@ function DashboardContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search deals..." 
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
@@ -210,9 +271,23 @@ function DashboardContent() {
                 Create First Deal
               </button>
             </div>
+          ) : filteredDeals.length === 0 && searchQuery ? (
+            <div className="text-center py-24 sm:py-32">
+              <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Search className="w-10 h-10 text-slate-400" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mb-2">No results found</p>
+              <p className="text-base text-slate-500 max-w-sm mx-auto mb-6">We couldn't find any deals matching "{searchQuery}"</p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3 rounded-xl transition-colors"
+              >
+                Clear Search
+              </button>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {deals.map((deal) => (
+              {filteredDeals.map((deal) => (
                 <div
                   key={deal.id}
                   className="px-8 py-6 hover:bg-slate-50/80 transition-colors group"
@@ -256,13 +331,27 @@ function DashboardContent() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       {deal.status === 'pending_payment' && (
-                        <ShareLink 
-                          url={getPaymentUrl(deal.id)} 
-                          title={`SafeTrade Escrow: ${deal.itemName}`} 
-                          text={`Securely pay ₵${deal.amountGHS.toFixed(2)} to ${vendor?.displayName || 'me'} using SafeTrade. Your money is protected!`}
-                        />
+                        <>
+                          <button
+                            onClick={() => handleCancelDeal(deal.id)}
+                            disabled={cancellingDealId === deal.id}
+                            className="bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-slate-200 hover:border-red-200 shadow-sm disabled:opacity-50"
+                          >
+                            {cancellingDealId === deal.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <XCircle className="w-4 h-4" />
+                            )}
+                            <span className="hidden sm:inline">Cancel</span>
+                          </button>
+                          <ShareLink 
+                            url={getPaymentUrl(deal.id)} 
+                            title={`SafeTrade Escrow: ${deal.itemName}`} 
+                            text={`Securely pay ₵${deal.amountGHS.toFixed(2)} to ${vendor?.displayName || 'me'} using SafeTrade. Your money is protected!`}
+                          />
+                        </>
                       )}
                     </div>
                   </div>

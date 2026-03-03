@@ -15,8 +15,12 @@ import {
   Shield,
   PartyPopper,
   ExternalLink,
+  ImagePlus,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 export default function ConfirmPage() {
   const params = useParams();
@@ -29,6 +33,8 @@ export default function ConfirmPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [submittingDispute, setSubmittingDispute] = useState(false);
   const [disputeSubmitted, setDisputeSubmitted] = useState(false);
 
@@ -78,11 +84,39 @@ export default function ConfirmPage() {
     }
   }
 
+  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  }
+
+  function clearPhoto() {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+  }
+
   async function handleDispute(e: React.FormEvent) {
     e.preventDefault();
     if (!deal || !disputeReason) return;
     setSubmittingDispute(true);
+    
     try {
+      let photoUrl = '';
+      if (photoFile) {
+        toast.loading('Uploading evidence photo...', { id: 'upload' });
+        const storageRef = ref(storage, `disputes/${deal.id}_${Date.now()}_${photoFile.name}`);
+        const uploadTask = await uploadBytesResumable(storageRef, photoFile);
+        photoUrl = await getDownloadURL(uploadTask.ref);
+        toast.dismiss('upload');
+      }
+
       const res = await fetch('/api/dispute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,6 +124,7 @@ export default function ConfirmPage() {
           dealId: deal.id,
           confirmationToken: token,
           reason: disputeReason,
+          photoUrl,
         }),
       });
 
@@ -102,6 +137,7 @@ export default function ConfirmPage() {
       }
     } catch (err) {
       console.error(err);
+      toast.dismiss();
       toast.error('Error submitting dispute');
     } finally {
       setSubmittingDispute(false);
@@ -291,6 +327,31 @@ export default function ConfirmPage() {
                   placeholder="e.g. The item never arrived, wrong color, damaged package..."
                   className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 font-medium transition-all resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">Photo Evidence (Optional)</label>
+                {!photoPreview ? (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <ImagePlus className="w-8 h-8 mb-3 text-slate-400" />
+                      <p className="mb-2 text-sm text-slate-500 font-bold">Click to upload photo</p>
+                      <p className="text-xs text-slate-400">PNG, JPG or JPEG (MAX. 5MB)</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+                  </label>
+                ) : (
+                  <div className="relative w-full h-48 rounded-2xl overflow-hidden border-2 border-slate-200">
+                    <img src={photoPreview} alt="Evidence preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={clearPhoto}
+                      className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-sm"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">

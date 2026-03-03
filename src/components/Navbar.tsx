@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Menu, X, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Shield, Menu, X, LogOut, LayoutDashboard, User, Settings } from 'lucide-react';
 
 export default function Navbar() {
   const { user, vendor, logout, loading } = useAuth();
@@ -43,6 +43,13 @@ export default function Navbar() {
                     Profile
                   </Link>
                 )}
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-bold transition-colors text-sm px-4 py-2.5 rounded-xl hover:bg-emerald-50"
+                >
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </Link>
                 <button
                   onClick={logout}
                   className="flex items-center gap-2 text-slate-500 hover:text-red-600 font-bold transition-colors text-sm px-4 py-2.5 rounded-xl hover:bg-red-50"
@@ -93,6 +100,14 @@ export default function Navbar() {
                     My Profile
                   </Link>
                 )}
+                <Link
+                  href="/settings"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 text-slate-700 hover:text-emerald-600 font-bold px-4 py-4 rounded-xl hover:bg-emerald-50"
+                >
+                  <Settings className="w-5 h-5" />
+                  Settings
+                </Link>
                 <button
                   onClick={() => {
                     logout();

@@ -1,26 +1,35 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("[START] Deploying EscrowFactory to", hre.network.name, "...\n");
+  console.log("[START] Deploying contracts to", hre.network.name, "...\n");
 
+  // 1. Deploy Mock USDT
+  console.log("[1/2] Deploying MockUSDT...");
+  const MockUSDT = await hre.ethers.getContractFactory("MockUSDT");
+  const usdt = await MockUSDT.deploy();
+  await usdt.waitForDeployment();
+  const usdtAddress = await usdt.getAddress();
+  console.log("MockUSDT deployed to:", usdtAddress);
+
+  // 2. Deploy EscrowFactory with USDT address
+  console.log("\n[2/2] Deploying EscrowFactory...");
   const EscrowFactory = await hre.ethers.getContractFactory("EscrowFactory");
-  const escrow = await EscrowFactory.deploy();
-
+  const escrow = await EscrowFactory.deploy(usdtAddress);
   await escrow.waitForDeployment();
-
-  const address = await escrow.getAddress();
+  const escrowAddress = await escrow.getAddress();
   const owner = await escrow.owner();
 
-  console.log("[SUCCESS] EscrowFactory deployed successfully!");
-  console.log("[LOC] Contract Address:", address);
-  console.log("[USER] Owner:", owner);
+  console.log("\n[SUCCESS] Deployment completed successfully!");
+  console.log("--------------------------------------------------");
+  console.log("MockUSDT Address:     ", usdtAddress);
+  console.log("EscrowFactory Address:", escrowAddress);
+  console.log("Owner Address:        ", owner);
+  console.log("--------------------------------------------------");
+
   console.log("\n[TODO] Next Steps:");
-  console.log(`   1. Add to .env: ESCROW_CONTRACT_ADDRESS=${address}`);
-  console.log("   2. Verify on BSCScan (optional):");
-  console.log(`      npx hardhat verify --network bnbTestnet ${address}`);
-  console.log(
-    "\n[LINK] View on BSCScan: https://testnet.bscscan.com/address/" + address
-  );
+  console.log(`   1. Add to .env.local:`);
+  console.log(`      MOCK_USDT_ADDRESS=${usdtAddress}`);
+  console.log(`      ESCROW_CONTRACT_ADDRESS=${escrowAddress}`);
 }
 
 main()

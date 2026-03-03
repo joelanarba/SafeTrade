@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /**
  * @title EscrowFactory
  * @notice SafeTrade Ghana Escrow Contract — holds funds until buyer confirms delivery
@@ -8,6 +10,7 @@ pragma solidity ^0.8.19;
  */
 contract EscrowFactory {
     address public owner;
+    IERC20 public paymentToken;
 
     struct Escrow {
         string dealId;
@@ -34,25 +37,32 @@ contract EscrowFactory {
         _;
     }
 
-    constructor() {
+    constructor(address _paymentToken) {
+        require(_paymentToken != address(0), "Invalid token address");
         owner = msg.sender;
+        paymentToken = IERC20(_paymentToken);
     }
 
     /**
-     * @notice Create a new escrow for a deal
+     * @notice Create a new escrow for a deal using ERC20 payment
      * @param dealId Unique deal identifier
      * @param vendorAddress The vendor's wallet address
-     * @param amount The amount in wei to be escrowed
+     * @param amount The amount in tokens (wei format) to be escrowed
      */
     function createEscrow(
         string calldata dealId,
         address vendorAddress,
         uint256 amount
-    ) external payable {
-        require(msg.value == amount, "Sent value must equal amount");
+    ) external {
         require(amount > 0, "Amount must be greater than 0");
         require(!escrows[dealId].funded, "Escrow already exists for this deal");
         require(vendorAddress != address(0), "Invalid vendor address");
+
+        // Transfer tokens from caller to this contract
+        require(
+            paymentToken.transferFrom(msg.sender, address(this), amount),
+            "Token transfer failed. Check balance and allowance."
+        );
 
         escrows[dealId] = Escrow({
             dealId: dealId,
@@ -81,8 +91,7 @@ contract EscrowFactory {
 
         escrow.released = true;
 
-        (bool sent, ) = payable(escrow.vendorAddress).call{value: escrow.amount}("");
-        require(sent, "Transfer to vendor failed");
+        require(paymentToken.transfer(escrow.vendorAddress, escrow.amount), "Transfer to vendor failed");
 
         emit EscrowReleased(dealId, escrow.vendorAddress, escrow.amount);
     }
@@ -99,8 +108,7 @@ contract EscrowFactory {
 
         escrow.refunded = true;
 
-        (bool sent, ) = payable(escrow.buyer).call{value: escrow.amount}("");
-        require(sent, "Refund to buyer failed");
+        require(paymentToken.transfer(escrow.buyer, escrow.amount), "Refund to buyer failed");
 
         emit EscrowRefunded(dealId, escrow.buyer, escrow.amount);
     }

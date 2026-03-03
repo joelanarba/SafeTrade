@@ -28,7 +28,8 @@ export type DealStatus =
   | 'delivered'
   | 'disputed'
   | 'completed'
-  | 'refunded';
+  | 'refunded'
+  | 'cancelled';
 
 export interface Vendor {
   id: string;
@@ -44,6 +45,7 @@ export interface Vendor {
   createdAt: string;
   verified: boolean;
   photoURL: string;
+  walletAddress?: string;
 }
 
 export interface EscrowState {
@@ -62,6 +64,7 @@ export const STATUS_LABELS: Record<DealStatus, string> = {
   disputed: 'Disputed',
   completed: 'Completed',
   refunded: 'Refunded',
+  cancelled: 'Cancelled',
 };
 
 export const STATUS_COLORS: Record<DealStatus, string> = {
@@ -71,4 +74,5 @@ export const STATUS_COLORS: Record<DealStatus, string> = {
   disputed: 'bg-red-500/20 text-red-400 border-red-500/30',
   completed: 'bg-green-500/20 text-green-400 border-green-500/30',
   refunded: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  cancelled: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
 };

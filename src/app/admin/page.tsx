@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { getDisputedDeals } from '@/lib/firestore';
 import { Deal } from '@/lib/types';
+import { auth } from '@/lib/firebase';
 import {
   Shield,
   AlertTriangle,
@@ -14,15 +15,46 @@ import {
   RotateCcw,
   ExternalLink,
   Image as ImageIcon,
+  ShieldOff,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Admin email whitelist — must match ADMIN_EMAILS env var on the server
+const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export default function AdminPage() {
   return (
     <ProtectedRoute>
-      <AdminContent />
+      <AdminGate />
     </ProtectedRoute>
   );
+}
+
+/** Gate: checks if the logged-in user is an admin before rendering content */
+function AdminGate() {
+  const { user } = useAuth();
+  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 mesh-bg px-4">
+        <div className="text-center bg-white rounded-3xl p-10 max-w-md w-full shadow-soft border border-slate-100">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <ShieldOff className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Access Denied</h2>
+          <p className="text-slate-500 font-medium">
+            You do not have admin privileges. This page is restricted to platform administrators.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminContent />;
 }
 
 function AdminContent() {
@@ -49,9 +81,19 @@ function AdminContent() {
   async function handleResolve(dealId: string, action: 'release' | 'refund') {
     setActionLoading(dealId);
     try {
+      // Get fresh ID token for admin verification
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) {
+        toast.error('Authentication expired. Please refresh the page.');
+        return;
+      }
+
       const res = await fetch('/api/admin/resolve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ dealId, action }),
       });
 
