@@ -28,6 +28,11 @@ import {
   Send as SendIcon,
   Timer,
   ImagePlus,
+  FileText,
+  Settings,
+  Rocket,
+  Share2,
+  CircleDot,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -345,24 +350,78 @@ function DashboardContent() {
           </button>
         </div>
 
-        {/* MoMo Setup Prompt */}
-        {vendor && !vendor.momoNumber && (
-          <a
-            href="/settings"
-            className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 hover:bg-amber-100/60 transition-colors group"
-          >
-            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Banknote className="w-5 h-5 text-amber-600" />
+        {/* Onboarding Checklist */}
+        {vendor && (() => {
+          const steps = [
+            { key: 'account', label: 'Create your account', desc: 'Sign up and get started on SafeTrade', done: true, icon: CheckCircle, color: 'emerald' },
+            { key: 'momo', label: 'Set up MoMo payout', desc: 'Add your Mobile Money number to receive payouts', done: !!vendor.momoNumber, icon: Banknote, color: 'amber', action: '/settings', actionLabel: 'Go to Settings' },
+            { key: 'deal', label: 'Create your first deal', desc: 'Generate a secure escrow payment link', done: deals.length > 0, icon: Package, color: 'blue', onClick: () => setShowCreateModal(true), actionLabel: 'Create Deal' },
+            { key: 'share', label: 'Get your first buyer', desc: 'Share your payment link and receive a payment', done: deals.some(d => d.status !== 'pending_payment' && d.status !== 'cancelled'), icon: Share2, color: 'purple' },
+            { key: 'complete', label: 'Complete your first sale', desc: 'Buyer confirms delivery and funds are released', done: completedDeals.length > 0, icon: Rocket, color: 'emerald' },
+          ];
+          const doneCount = steps.filter(s => s.done).length;
+          const allDone = doneCount === steps.length;
+          if (allDone) return null;
+          const progress = Math.round((doneCount / steps.length) * 100);
+          return (
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 mb-10">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    <Rocket className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Getting Started</h3>
+                    <p className="text-sm text-slate-500 font-medium">{doneCount} of {steps.length} steps completed</p>
+                  </div>
+                </div>
+                <span className="text-sm font-extrabold text-emerald-600">{progress}%</span>
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-slate-100 rounded-full mb-6 overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+              </div>
+              {/* Steps */}
+              <div className="space-y-3">
+                {steps.map((step) => {
+                  const Icon = step.icon;
+                  const colorMap: Record<string, {bg: string, icon: string, ring: string}> = {
+                    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', ring: 'border-emerald-200' },
+                    amber: { bg: 'bg-amber-50', icon: 'text-amber-600', ring: 'border-amber-200' },
+                    blue: { bg: 'bg-blue-50', icon: 'text-blue-600', ring: 'border-blue-200' },
+                    purple: { bg: 'bg-purple-50', icon: 'text-purple-600', ring: 'border-purple-200' },
+                  };
+                  const c = colorMap[step.color] || colorMap.emerald;
+                  return (
+                    <div key={step.key} className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${step.done ? 'bg-slate-50/50' : 'bg-white border border-slate-100'}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${step.done ? 'bg-emerald-100' : c.bg}`}>
+                        {step.done ? (
+                          <CheckCircle className="w-5 h-5 text-emerald-600" />
+                        ) : (
+                          <Icon className={`w-5 h-5 ${c.icon}`} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-bold ${step.done ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{step.label}</p>
+                        {!step.done && <p className="text-xs text-slate-500 font-medium mt-0.5">{step.desc}</p>}
+                      </div>
+                      {!step.done && step.action && (
+                        <a href={step.action} className={`text-xs font-bold px-3.5 py-1.5 rounded-lg ${c.bg} ${c.icon} border ${c.ring} hover:opacity-80 transition-opacity flex-shrink-0`}>
+                          {step.actionLabel}
+                        </a>
+                      )}
+                      {!step.done && step.onClick && (
+                        <button onClick={step.onClick} className={`text-xs font-bold px-3.5 py-1.5 rounded-lg ${c.bg} ${c.icon} border ${c.ring} hover:opacity-80 transition-opacity flex-shrink-0`}>
+                          {step.actionLabel}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-bold text-amber-900 text-sm">Set up your Mobile Money payout</p>
-              <p className="text-amber-700 text-xs font-medium mt-0.5">
-                Add your MoMo number in Settings to receive instant payouts when buyers confirm delivery.
-              </p>
-            </div>
-            <span className="text-amber-600 text-sm font-bold group-hover:translate-x-1 transition-transform">→</span>
-          </a>
-        )}
+          );
+        })()}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -642,6 +701,17 @@ function DashboardContent() {
                           )}
                           <span className="hidden sm:inline">Delete</span>
                         </button>
+                      )}
+                      {(deal.status === 'completed' || deal.status === 'refunded') && (
+                        <a
+                          href={`/receipt/${deal.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-emerald-200 shadow-sm"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Receipt</span>
+                        </a>
                       )}
                     </div>
                   </div>
