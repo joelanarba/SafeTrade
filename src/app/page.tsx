@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Lock, Users, Star, CheckCircle, ArrowRight, CheckCircle2, Circle, Check, Zap, Smartphone, ShoppingBag } from 'lucide-react';
+import { Shield, Lock, Users, Star, CheckCircle, ArrowRight, Check, Zap, Smartphone, ShoppingBag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
 import { getTotalDealsCount } from '@/lib/firestore';
@@ -20,7 +20,7 @@ const HERO_CATEGORIES = [
     icon: <Smartphone className="w-12 h-12 text-amber-500" strokeWidth={2.5} />
   },
   {
-    title: 'Complete protection for service agreements',
+    title: 'Complete protection for high-value product sales',
     graphicColor: 'bg-blue-100/50 border border-blue-200', // Light Blue
     icon: <Zap className="w-12 h-12 text-blue-500" strokeWidth={2.5} />
   }
@@ -28,10 +28,10 @@ const HERO_CATEGORIES = [
 
 const TRANSACTION_STEPS = [
   'Buyer and seller agree on terms',
-  'Buyer pays SafeTrade.GH',
+  'Buyer pays through a secure SafeTrade link',
   'Seller ships the merchandise',
   'Buyer inspects & approves goods',
-  'SafeTrade.GH pays the seller',
+  'Funds are released automatically to the seller',
   'If a dispute occurs, SafeTrade steps in to review evidence and resolve fairly.'
 ];
 
@@ -112,7 +112,7 @@ export default function Home() {
                 {/* Row 1 */}
                 <div className="flex flex-col sm:flex-row border-b border-slate-100">
                   <div className="flex items-center cursor-pointer hover:bg-slate-50 flex-[0.35] p-5 border-r border-slate-100 transition-colors">
-                    <span className="text-[17px] mr-1 text-slate-500">I'm</span>
+                    <span className="text-[17px] mr-1 text-slate-500">I&apos;m</span>
                     <span className="text-[17px] font-bold text-slate-900 mr-auto">Selling</span>
                     <span className="text-[10px] text-slate-400">▼</span>
                   </div>

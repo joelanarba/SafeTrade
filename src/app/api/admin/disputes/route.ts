@@ -36,9 +36,9 @@ export async function GET(request: NextRequest) {
     }));
 
     // Sort in memory instead of requiring a Firestore composite index
-    disputes.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt as string).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt as string).getTime() : 0;
+    disputes.sort((a: any, b: any) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
 

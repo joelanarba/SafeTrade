@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getDealByConfirmationToken, getVendor, getBuyer } from '@/lib/firestore';
-import { Deal, Vendor, Buyer } from '@/lib/types';
+import { getDealByConfirmationToken, getBuyer } from '@/lib/firestore';
+import { Deal, Buyer } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
 import {
@@ -18,10 +18,8 @@ import {
   ImagePlus,
   X,
   Truck,
-  MapPin,
   Hash,
   Clock,
-  FileText,
   Timer,
   ShoppingBag,
 } from 'lucide-react';
@@ -33,12 +31,25 @@ function formatDeliveryTime(hours: number): string {
   return '1-2 weeks';
 }
 
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = 15000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export default function ConfirmPage() {
   const params = useParams();
   const token = params.token as string;
 
   const [deal, setDeal] = useState<Deal | null>(null);
-  const [vendor, setVendor] = useState<Vendor | null>(null);
   const [buyer, setBuyer] = useState<Buyer | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -69,8 +80,6 @@ export default function ConfirmPage() {
       const d = await getDealByConfirmationToken(token);
       setDeal(d);
       if (d) {
-        const v = await getVendor(d.vendorId);
-        setVendor(v);
         if (d.status === 'completed') setConfirmed(true);
         if (d.status === 'disputed') setDisputeSubmitted(true);
         // Load buyer profile
@@ -153,10 +162,10 @@ export default function ConfirmPage() {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('dealId', deal.id);
-          const uploadRes = await fetch('/api/upload-evidence', {
+          const uploadRes = await fetchWithTimeout('/api/upload-evidence', {
             method: 'POST',
             body: formData,
-          });
+          }, 15000);
           if (!uploadRes.ok) {
             const err = await uploadRes.json();
             throw new Error(err.error || 'Upload failed');
@@ -164,10 +173,9 @@ export default function ConfirmPage() {
           const { url } = await uploadRes.json();
           uploadedUrls.push(url);
         }
-        toast.dismiss('upload');
       }
 
-      const res = await fetch('/api/dispute', {
+      const res = await fetchWithTimeout('/api/dispute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -177,7 +185,7 @@ export default function ConfirmPage() {
           details: disputeDetails,
           photoUrls: uploadedUrls,
         }),
-      });
+      }, 15000);
 
       if (res.ok) {
         setDisputeSubmitted(true);
@@ -189,8 +197,13 @@ export default function ConfirmPage() {
     } catch (err) {
       console.error(err);
       toast.dismiss();
-      toast.error('Error submitting dispute');
+      if (err instanceof Error && err.name === 'AbortError') {
+        toast.error('Request timed out. Please try again.');
+      } else {
+        toast.error('Error submitting dispute');
+      }
     } finally {
+      toast.dismiss('upload');
       setSubmittingDispute(false);
     }
   }
@@ -266,6 +279,15 @@ export default function ConfirmPage() {
               <ExternalLink className="w-4 h-4" />
             </a>
           )}
+
+          <a
+            href={`/receipt/${deal.id}`}
+            className="inline-flex items-center gap-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3.5 rounded-xl font-bold transition-all text-sm mt-4"
+          >
+            <Shield className="w-5 h-5 text-emerald-600" />
+            View Transaction Receipt
+            <ExternalLink className="w-4 h-4" />
+          </a>
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const FROM_EMAIL = 'SafeTrade Ghana <noreply@safetrade.app>';
+const EMAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || '4000');
 
 async function sendEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY) {
@@ -8,21 +9,37 @@ async function sendEmail(to: string, subject: string, html: string) {
     return;
   }
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: FROM_EMAIL,
-      to,
-      subject,
-      html,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
 
-  return res.json();
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to,
+        subject,
+        html,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      throw new Error(`Resend API error (${res.status}): ${errBody}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error('Email send failed:', error);
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function sendPaymentConfirmation(

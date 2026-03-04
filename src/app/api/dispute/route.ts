@@ -63,21 +63,35 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Send dispute alerts (non-blocking)
+    // Queue dispute alerts without blocking API response
+    const alertTasks: Promise<unknown>[] = [];
     try {
-      const vendorSnap2 = await adminDb.collection('vendors').doc(deal.vendorId).get();
-      if (vendorSnap2.exists) {
-        const vendor = vendorSnap2.data()!;
-        if (vendor.email) {
-          await sendDisputeAlert(vendor.email, vendor.displayName, deal.itemName, fullReason, true);
+      if (vendorSnap.exists) {
+        const vendorData = vendorSnap.data()!;
+        if (vendorData.email) {
+          alertTasks.push(
+            sendDisputeAlert(vendorData.email, vendorData.displayName, deal.itemName, fullReason, true)
+          );
         }
       }
 
       if (deal.buyerEmail) {
-        await sendDisputeAlert(deal.buyerEmail, deal.buyerName, deal.itemName, fullReason, false);
+        alertTasks.push(
+          sendDisputeAlert(deal.buyerEmail, deal.buyerName, deal.itemName, fullReason, false)
+        );
       }
-    } catch (emailErr) {
-      console.error('Email error (non-critical):', emailErr);
+    } catch (emailSetupErr) {
+      console.error('Email setup error (non-critical):', emailSetupErr);
+    }
+
+    if (alertTasks.length > 0) {
+      void Promise.allSettled(alertTasks).then((results) => {
+        results.forEach((result) => {
+          if (result.status === 'rejected') {
+            console.error('Dispute alert failed (non-critical):', result.reason);
+          }
+        });
+      });
     }
 
     return NextResponse.json({ message: 'Dispute submitted' });

@@ -95,7 +95,7 @@ export function BlockchainTrustSection() {
           </h2>
           <p className="text-slate-500 text-xl max-w-3xl mx-auto font-medium leading-relaxed">
             Every escrow transaction is secured by an immutable smart contract on the BNB Smart Chain.
-            No middleman can access your funds — only verified code.
+            Release rules run in code, and disputes are handled through documented SafeTrade review.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ export function BlockchainTrustSection() {
             </div>
             <h3 className="text-lg font-extrabold text-slate-900 mb-3 tracking-tight">Trust Enforced by Code</h3>
             <p className="text-slate-500 text-sm font-medium leading-relaxed">
-              No human intermediary controls your money. The smart contract enforces the rules — fair, automatic, and transparent.
+              Smart contracts enforce release conditions automatically. If a dispute is raised, SafeTrade reviews evidence before final resolution.
             </p>
           </div>
         </div>
