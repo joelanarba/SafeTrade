@@ -163,6 +163,15 @@ export async function createVendor(
   email: string,
   photoURL: string
 ): Promise<Vendor> {
+  // Generate a base username from displayName or use a standard prefix
+  let baseUsername = displayName 
+    ? displayName.toLowerCase().replace(/[^a-z0-9]/g, '') 
+    : 'vendor';
+    
+  if (baseUsername.length < 3) {
+    baseUsername = 'vendor' + Math.floor(Math.random() * 10000);
+  }
+
   const vendor: Vendor = {
     id: vendorId,
     displayName,
@@ -177,6 +186,7 @@ export async function createVendor(
     createdAt: new Date().toISOString(),
     verified: false,
     photoURL: photoURL || '',
+    username: baseUsername.substring(0, 20),
   };
 
   await setDoc(doc(db, 'vendors', vendorId), vendor, { merge: true });
@@ -185,6 +195,18 @@ export async function createVendor(
 
 export async function updateVendor(vendorId: string, data: Partial<Vendor>): Promise<void> {
   await updateDoc(doc(db, 'vendors', vendorId), data);
+}
+
+export async function getVendorByUsername(username: string): Promise<Vendor | null> {
+  const q = query(
+    collection(db, 'vendors'),
+    where('username', '==', username),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docData = snapshot.docs[0];
+  return { id: docData.id, ...docData.data() } as Vendor;
 }
 
 export async function getVendorTransactionHistory(vendorId: string, count = 10): Promise<Deal[]> {

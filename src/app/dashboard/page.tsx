@@ -39,6 +39,7 @@ import {
   Rocket,
   Share2,
   CircleDot,
+  User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -395,6 +396,15 @@ function DashboardContent() {
               </span>
             </button>
             <a
+              href={`/${vendor?.username || vendor?.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              <User className="w-5 h-5" />
+              Public Profile
+            </a>
+            <a
               href="/settings"
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             >
@@ -406,8 +416,12 @@ function DashboardContent() {
 
         <div className="p-4 border-t border-slate-100 mt-auto">
           <div className="mb-4 px-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center font-bold text-emerald-700">
-              {vendor?.displayName?.charAt(0)?.toUpperCase() || 'V'}
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center font-bold text-emerald-700 overflow-hidden">
+              {vendor?.photoURL ? (
+                <img src={vendor.photoURL} alt={vendor.displayName} className="w-full h-full object-cover" />
+              ) : (
+                vendor?.displayName?.charAt(0)?.toUpperCase() || 'V'
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-slate-900 truncate">{vendor?.displayName || 'Vendor'}</p>

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { momoNumber, momoProvider, phone, displayName } = body;
+    const { momoNumber, momoProvider, phone, displayName, username, photoURL } = body;
 
     // Validate MoMo provider
     const validProviders = ['MTN', 'Vodafone', 'AirtelTigo'];
@@ -36,12 +36,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate Username
+    if (username) {
+      if (username.length < 3 || username.length > 20) {
+        return NextResponse.json({ error: 'Username must be between 3 and 20 characters' }, { status: 400 });
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(username)) {
+        return NextResponse.json({ error: 'Username can only contain letters and numbers' }, { status: 400 });
+      }
+
+      // Check uniqueness
+      const existingUser = await adminDb.collection('vendors').where('username', '==', username).limit(1).get();
+      if (!existingUser.empty && existingUser.docs[0].id !== uid) {
+        return NextResponse.json({ error: 'Username is already taken' }, { status: 409 });
+      }
+    }
+
     // Build update object — only include provided fields
     const updateData: Record<string, string> = {};
     if (momoNumber !== undefined) updateData.momoNumber = momoNumber;
     if (momoProvider !== undefined) updateData.momoProvider = momoProvider;
     if (phone !== undefined) updateData.phone = phone;
     if (displayName !== undefined) updateData.displayName = displayName;
+    if (username !== undefined) updateData.username = username;
+    if (photoURL !== undefined) updateData.photoURL = photoURL;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });

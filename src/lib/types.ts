@@ -80,6 +80,7 @@ export interface Vendor {
   verified: boolean;
   photoURL: string;
   walletAddress?: string;
+  username?: string;
 }
 
 export interface EscrowState {

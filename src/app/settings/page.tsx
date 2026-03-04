@@ -13,6 +13,8 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -28,16 +30,21 @@ function SettingsContent() {
   const { vendor, refreshVendor } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [phone, setPhone] = useState('');
   const [momoNumber, setMomoNumber] = useState('');
   const [momoProvider, setMomoProvider] = useState<'MTN' | 'Vodafone' | 'AirtelTigo'>('MTN');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Pre-fill from vendor profile
   useEffect(() => {
     if (vendor) {
       setDisplayName(vendor.displayName || '');
+      setUsername(vendor.username || '');
+      setPhotoURL(vendor.photoURL || '');
       setPhone(vendor.phone || '');
       setMomoNumber(vendor.momoNumber || '');
       setMomoProvider(vendor.momoProvider || 'MTN');
@@ -64,6 +71,8 @@ function SettingsContent() {
         },
         body: JSON.stringify({
           displayName,
+          username,
+          photoURL,
           phone,
           momoNumber,
           momoProvider,
@@ -84,6 +93,45 @@ function SettingsContent() {
       toast.error('Error saving settings');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('Not authenticated');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload-profile-image', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Failed to upload image');
+
+      const data = await res.json();
+      setPhotoURL(data.url);
+      toast.success('Image uploaded successfully');
+    } catch (err) {
+      console.error('Image upload error:', err);
+      toast.error('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+      if (e.target) e.target.value = ''; // Reset input
     }
   }
 
@@ -129,7 +177,46 @@ function SettingsContent() {
               Business Profile
             </h2>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
+              {/* Profile Image Upload */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">Profile Picture</label>
+                <div className="flex items-center gap-6">
+                  <div className="w-24 h-24 rounded-full bg-slate-100 flex flex-shrink-0 items-center justify-center overflow-hidden border border-slate-200">
+                    {photoURL ? (
+                      <img src={photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10 text-slate-400" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="inline-flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-emerald-500 text-slate-700 hover:text-emerald-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer">
+                      {uploadingImage ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Choose Image
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                    <p className="text-xs font-medium text-slate-400 mt-2">
+                      JPG, PNG or WEBP. Max size 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">
                   Business / Display Name
@@ -141,6 +228,27 @@ function SettingsContent() {
                   placeholder="e.g. Abena's Fashion"
                   className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Custom Username
+                </label>
+                <div className="flex items-center mt-1">
+                  <span className="inline-flex items-center px-4 rounded-l-xl border-2 border-r-0 border-slate-100 bg-slate-50 text-slate-500 font-medium text-sm py-3.5 h-full">
+                    safetrade.app/
+                  </span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                    placeholder="e.g. abenasfashion"
+                    className="flex-1 bg-white border-2 border-slate-100 rounded-r-xl px-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-bold transition-all"
+                  />
+                </div>
+                <p className="text-xs font-medium text-slate-400 mt-2 leading-relaxed">
+                  This forms your unique public profile link. Only letters and numbers allowed.
+                </p>
               </div>
 
               <div>
