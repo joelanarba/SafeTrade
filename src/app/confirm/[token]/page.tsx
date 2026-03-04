@@ -385,9 +385,13 @@ export default function ConfirmPage() {
         {/* Deal Summary */}
         <div className="bg-white rounded-[2rem] p-6 sm:p-8 mb-6 shadow-soft border border-slate-100">
           <div className="flex items-start gap-5 mb-8">
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <Package className="w-8 h-8 text-blue-600" />
-            </div>
+            {deal.itemImage ? (
+              <img src={deal.itemImage} alt={deal.itemName} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 border border-slate-200 shadow-sm" />
+            ) : (
+              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Package className="w-8 h-8 text-blue-600" />
+              </div>
+            )}
             <div className="flex-1">
               <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">{deal.itemName}</h2>
               <p className="text-base font-medium text-slate-500 mt-2 leading-relaxed">{deal.description}</p>

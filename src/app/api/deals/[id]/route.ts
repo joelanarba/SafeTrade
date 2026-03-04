@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const decodedToken = await adminAuth.verifyIdToken(token);
     const uid = decodedToken.uid;
 
-    const { itemName, description, price } = await req.json();
+    const { itemName, description, price, itemImage } = await req.json();
 
     const dealRef = adminDb.collection('deals').doc(dealId);
     const dealSnap = await dealRef.get();
@@ -77,14 +77,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const platformFee = Math.round(amountGHS * 0.02 * 100) / 100;
     const vendorPayout = Math.round((amountGHS - platformFee) * 100) / 100;
 
-    await dealRef.update({
+    const updateData: Record<string, unknown> = {
       itemName: itemName || deal.itemName,
       description: description ?? deal.description,
       amountGHS,
       platformFee,
       vendorPayout,
       updatedAt: new Date().toISOString(),
-    });
+    };
+
+    if (itemImage !== undefined) {
+      updateData.itemImage = itemImage;
+    }
+
+    await dealRef.update(updateData);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -27,6 +27,7 @@ import {
   Globe,
   Send as SendIcon,
   Timer,
+  ImagePlus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -65,6 +66,27 @@ function DashboardContent() {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('personal');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [estimatedDelivery, setEstimatedDelivery] = useState<number>(24);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+
+  function handleImageSelect(file: File, mode: 'create' | 'edit') {
+    if (!file.type.startsWith('image/')) { toast.error('Only image files are allowed'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    const url = URL.createObjectURL(file);
+    if (mode === 'create') { setImageFile(file); setImagePreview(url); }
+    else { setEditImageFile(file); setEditImagePreview(url); }
+  }
+
+  async function uploadDealImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload-deal-image', { method: 'POST', body: formData });
+    if (!res.ok) throw new Error('Image upload failed');
+    const data = await res.json();
+    return data.url;
+  }
 
   useEffect(() => {
     if (user) loadDeals();
@@ -92,6 +114,10 @@ function DashboardContent() {
         toast.error('Enter a valid price');
         return;
       }
+      let imageUrl = '';
+      if (imageFile) {
+        imageUrl = await uploadDealImage(imageFile);
+      }
       const deal = await createDeal(
         user.uid,
         vendor.displayName || user.displayName || 'Vendor',
@@ -101,7 +127,8 @@ function DashboardContent() {
         amount,
         deliveryMethod,
         deliveryMethod === 'courier' ? trackingNumber : '',
-        estimatedDelivery
+        estimatedDelivery,
+        imageUrl
       );
       setDeals((prev) => [deal, ...prev]);
       setShowCreateModal(false);
@@ -112,6 +139,8 @@ function DashboardContent() {
       setDeliveryMethod('personal');
       setTrackingNumber('');
       setEstimatedDelivery(24);
+      setImageFile(null);
+      setImagePreview(null);
       toast.success('Deal created! Share the payment link with your buyer.');
     } catch (err) {
       console.error(err);
@@ -178,6 +207,8 @@ function DashboardContent() {
     setEditName(deal.itemName);
     setEditDesc(deal.description);
     setEditPrice(deal.amountGHS.toString());
+    setEditImageFile(null);
+    setEditImagePreview(deal.itemImage || null);
   }
 
   async function handleEditDeal(e: React.FormEvent) {
@@ -185,6 +216,14 @@ function DashboardContent() {
     if (!user || !editingDeal) return;
     setSaving(true);
     try {
+      let newImageUrl: string | undefined = undefined;
+      if (editImageFile) {
+        newImageUrl = await uploadDealImage(editImageFile);
+      } else if (editImagePreview === null && editingDeal.itemImage) {
+        // Image was removed
+        newImageUrl = '';
+      }
+
       const token = await user.getIdToken();
       const res = await fetch(`/api/deals/${editingDeal.id}`, {
         method: 'PATCH',
@@ -196,6 +235,7 @@ function DashboardContent() {
           itemName: editName,
           description: editDesc,
           price: editPrice,
+          ...(newImageUrl !== undefined ? { itemImage: newImageUrl } : {}),
         }),
       });
 
@@ -209,6 +249,7 @@ function DashboardContent() {
           amountGHS: amount,
           platformFee: fee,
           vendorPayout: Math.round((amount - fee) * 100) / 100,
+          ...(newImageUrl !== undefined ? { itemImage: newImageUrl } : {}),
         } : d));
         setEditingDeal(null);
         toast.success('Deal updated.');
@@ -464,7 +505,15 @@ function DashboardContent() {
                   className="px-8 py-6 hover:bg-slate-50/80 transition-colors group"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {deal.itemImage ? (
+                        <img src={deal.itemImage} alt={deal.itemName} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-slate-200" />
+                      ) : (
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Package className="w-6 h-6 text-slate-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-bold text-slate-900 truncate">{deal.itemName}</h3>
                         <StatusBadge status={deal.status} />
@@ -500,6 +549,7 @@ function DashboardContent() {
                           </>
                         )}
                       </div>
+                    </div>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-2">
@@ -724,6 +774,35 @@ function DashboardContent() {
                 </div>
               )}
 
+              {/* Product Image (Optional) */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Product Image <span className="text-slate-400 font-medium">(Optional)</span></label>
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-xl border-2 border-emerald-200" />
+                    <button
+                      type="button"
+                      onClick={() => { setImageFile(null); setImagePreview(null); }}
+                      className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all group">
+                    <ImagePlus className="w-8 h-8 text-slate-300 group-hover:text-emerald-500 transition-colors mb-2" />
+                    <span className="text-sm font-medium text-slate-400 group-hover:text-emerald-600 transition-colors">Click to upload image</span>
+                    <span className="text-xs text-slate-300 mt-1">JPG, PNG up to 5MB</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { if (e.target.files?.[0]) handleImageSelect(e.target.files[0], 'create'); }}
+                    />
+                  </label>
+                )}
+              </div>
+
               {price && parseFloat(price) > 0 && (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2">
                   <div className="flex justify-between text-sm font-medium text-slate-500 mb-2">
@@ -807,6 +886,35 @@ function DashboardContent() {
                     className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl pl-10 pr-4 py-3.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-medium transition-all"
                   />
                 </div>
+              </div>
+
+              {/* Product Image (Optional) */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Product Image <span className="text-slate-400 font-medium">(Optional)</span></label>
+                {editImagePreview ? (
+                  <div className="relative inline-block">
+                    <img src={editImagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-xl border-2 border-blue-200" />
+                    <button
+                      type="button"
+                      onClick={() => { setEditImageFile(null); setEditImagePreview(null); }}
+                      className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
+                    <ImagePlus className="w-8 h-8 text-slate-300 group-hover:text-blue-500 transition-colors mb-2" />
+                    <span className="text-sm font-medium text-slate-400 group-hover:text-blue-600 transition-colors">Click to upload image</span>
+                    <span className="text-xs text-slate-300 mt-1">JPG, PNG up to 5MB</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { if (e.target.files?.[0]) handleImageSelect(e.target.files[0], 'edit'); }}
+                    />
+                  </label>
+                )}
               </div>
 
               {editPrice && parseFloat(editPrice) > 0 && (

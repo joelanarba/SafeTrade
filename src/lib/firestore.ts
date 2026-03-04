@@ -28,7 +28,8 @@ export async function createDeal(
   amountGHS: number,
   deliveryMethod?: DeliveryMethod,
   trackingNumber?: string,
-  estimatedDeliveryHours?: number
+  estimatedDeliveryHours?: number,
+  itemImage?: string
 ): Promise<Deal> {
   const dealId = uuidv4();
   const confirmationToken = uuidv4();
@@ -60,6 +61,7 @@ export async function createDeal(
     deliveryMethod: deliveryMethod || 'personal',
     trackingNumber: trackingNumber || '',
     estimatedDeliveryHours: estimatedDeliveryHours || 72,
+    itemImage: itemImage || '',
   };
 
   await setDoc(doc(db, 'deals', dealId), deal);

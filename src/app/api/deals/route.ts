@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { vendorId, vendorName, vendorPhone, itemName, description, amountGHS } = body;
+    const { vendorId, vendorName, vendorPhone, itemName, description, amountGHS, itemImage } = body;
 
     if (!vendorId || !itemName || !amountGHS) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       disputeReason: '',
       disputePhoto: '',
       confirmationToken,
+      itemImage: itemImage || '',
     };
 
     await adminDb.collection('deals').doc(dealId).set(deal);

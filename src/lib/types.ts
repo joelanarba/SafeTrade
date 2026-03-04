@@ -33,6 +33,7 @@ export interface Deal {
   payoutReference?: string;
   payoutStatus?: string;
   payoutError?: string;
+  itemImage?: string;
 }
 
 export interface Buyer {
