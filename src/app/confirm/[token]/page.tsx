@@ -24,8 +24,7 @@ import {
   FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
 
 export default function ConfirmPage() {
   const params = useParams();
@@ -134,9 +133,18 @@ export default function ConfirmPage() {
       if (photoFiles.length > 0) {
         toast.loading('Uploading evidence photos...', { id: 'upload' });
         for (const file of photoFiles) {
-          const storageRef = ref(storage, `disputes/${deal.id}_${Date.now()}_${file.name}`);
-          const uploadTask = await uploadBytesResumable(storageRef, file);
-          const url = await getDownloadURL(uploadTask.ref);
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('dealId', deal.id);
+          const uploadRes = await fetch('/api/upload-evidence', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!uploadRes.ok) {
+            const err = await uploadRes.json();
+            throw new Error(err.error || 'Upload failed');
+          }
+          const { url } = await uploadRes.json();
           uploadedUrls.push(url);
         }
         toast.dismiss('upload');
