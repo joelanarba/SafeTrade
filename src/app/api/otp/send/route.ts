@@ -53,8 +53,12 @@ export async function POST(req: NextRequest) {
 
     console.log(`[OTP] Code sent to ${normalizedPhone}: ${code}`);
 
+    const hasApiKey = !!process.env.ARKESEL_API_KEY;
+
     return NextResponse.json({
-      message: 'OTP sent successfully',
+      message: hasApiKey 
+        ? 'Verification code sent to your phone!' 
+        : 'Demo Mode: SMS disabled. Use code 000000 to verify.',
       phone: normalizedPhone,
     });
   } catch (error) {

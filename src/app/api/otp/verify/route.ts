@@ -12,6 +12,15 @@ export async function POST(req: NextRequest) {
     // Normalize phone number
     const normalizedPhone = phone.replace(/\s+/g, '').replace(/^0/, '+233');
 
+    // Hackathon / Demo Bypass for missing API Keys
+    if (otp === '000000' && !process.env.ARKESEL_API_KEY) {
+      return NextResponse.json({
+        verified: true,
+        phone: normalizedPhone,
+        name: 'Demo User',
+      });
+    }
+
     const otpRef = adminDb.collection('otps').doc(normalizedPhone);
     const otpSnap = await otpRef.get();
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Script from 'next/script';
+import dynamic from 'next/dynamic';
 import { getDeal } from '@/lib/firestore';
 import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
@@ -51,7 +52,7 @@ function formatDeliveryTime(hours: number): string {
   return '1-2 weeks';
 }
 
-export default function PayPage() {
+function PayPageContent() {
   const params = useParams();
   const dealId = params.dealId as string;
 
@@ -125,7 +126,7 @@ export default function PayPage() {
       if (res.ok) {
         setOtpStep('otp');
         setOtpCooldown(60);
-        toast.success('Verification code sent to your phone!');
+        toast.success(data.message || 'Verification code sent to your phone!', { duration: 8000 });
       } else {
         toast.error(data.error || 'Failed to send OTP');
       }
@@ -840,3 +841,9 @@ export default function PayPage() {
     </div>
   );
 }
+
+const PayPage = dynamic(() => Promise.resolve(PayPageContent), { 
+  ssr: false 
+});
+
+export default PayPage;
