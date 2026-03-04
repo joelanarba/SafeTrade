@@ -15,8 +15,8 @@ export default function TrustScore({ score, totalTrades, compact = false }: Trus
     return (
       <div className="flex items-center gap-1.5">
         <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-        <span className="text-sm font-semibold text-white">{score.toFixed(1)}</span>
-        <span className="text-xs text-gray-500">({totalTrades})</span>
+        <span className="text-sm font-semibold text-slate-900">{score.toFixed(1)}</span>
+        <span className="text-xs text-slate-500">({totalTrades})</span>
       </div>
     );
   }
@@ -29,11 +29,11 @@ export default function TrustScore({ score, totalTrades, compact = false }: Trus
         ))}
         {hasHalf && <StarHalf className="w-5 h-5 text-amber-400 fill-amber-400" />}
         {Array.from({ length: emptyStars }).map((_, i) => (
-          <Star key={`empty-${i}`} className="w-5 h-5 text-gray-600" />
+          <Star key={`empty-${i}`} className="w-5 h-5 text-slate-300" />
         ))}
       </div>
-      <p className="text-sm text-gray-400">
-        <span className="font-semibold text-white">{score.toFixed(1)}</span> / 5.0 •{' '}
+      <p className="text-sm text-slate-500">
+        <span className="font-semibold text-slate-900">{score.toFixed(1)}</span> / 5.0 •{' '}
         {totalTrades} trade{totalTrades !== 1 ? 's' : ''}
       </p>
     </div>
