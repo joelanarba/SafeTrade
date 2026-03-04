@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { getBuyer, getBuyerDeals } from '@/lib/firestore';
 import { Deal, Buyer } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import {
@@ -43,6 +42,15 @@ export default function BuyerPage() {
       return () => clearTimeout(timer);
     }
   }, [otpCooldown]);
+
+  // Check if user just verified on the /track page
+  useEffect(() => {
+    const authPhone = sessionStorage.getItem('buyer_auth');
+    if (authPhone === phone) {
+      setOtpStep('verified');
+      loadBuyerData(phone);
+    }
+  }, [phone]);
 
   async function handleSendOtp() {
     setSendingOtp(true);
@@ -102,12 +110,12 @@ export default function BuyerPage() {
   async function loadBuyerData(normalizedPhone: string) {
     setLoading(true);
     try {
-      const [b, d] = await Promise.all([
-        getBuyer(normalizedPhone),
-        getBuyerDeals(normalizedPhone),
-      ]);
-      setBuyer(b);
-      setDeals(d);
+      const res = await fetch(`/api/buyer?phone=${encodeURIComponent(normalizedPhone)}`);
+      if (!res.ok) throw new Error('Failed to load data');
+      const data = await res.json();
+      
+      setBuyer(data.buyer);
+      setDeals(data.deals || []);
     } catch (err) {
       console.error(err);
       toast.error('Error loading data');

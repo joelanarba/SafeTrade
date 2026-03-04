@@ -68,6 +68,9 @@ export default function TrackOrderPage() {
       const data = await res.json();
       if (res.ok && data.verified) {
         toast.success('Verified! Redirecting to your dashboard...');
+        // Save auth to session storage so the dashboard doesn't re-ask
+        sessionStorage.setItem('buyer_auth', data.phone);
+        
         // Encode phone to handle the + sign correctly in the URL
         router.push(`/buyer/${encodeURIComponent(data.phone)}`);
       } else {
