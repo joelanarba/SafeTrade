@@ -35,6 +35,7 @@ export default function BuyerPage() {
   const [buyer, setBuyer] = useState<Buyer | null>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
     if (otpCooldown > 0) {
@@ -45,10 +46,13 @@ export default function BuyerPage() {
 
   // Check if user just verified on the /track page
   useEffect(() => {
-    const authPhone = sessionStorage.getItem('buyer_auth');
-    if (authPhone === phone) {
-      setOtpStep('verified');
-      loadBuyerData(phone);
+    if (typeof window !== 'undefined') {
+      const authPhone = localStorage.getItem('buyer_auth');
+      if (authPhone === phone) {
+        setOtpStep('verified');
+        loadBuyerData(phone);
+      }
+      setInitialCheckDone(true);
     }
   }, [phone]);
 
@@ -95,6 +99,7 @@ export default function BuyerPage() {
       if (res.ok && data.verified) {
         setOtpStep('verified');
         toast.success('Verified! Loading your history...');
+        localStorage.setItem('buyer_auth', data.phone);
         loadBuyerData(data.phone);
       } else {
         toast.error(data.error || 'Invalid code');
@@ -124,14 +129,14 @@ export default function BuyerPage() {
     }
   }
 
-  const completedDeals = deals.filter(d => d.status === 'completed');
+  const pastDeals = deals.filter(d => !['pending_payment', 'in_escrow', 'disputed'].includes(d.status));
   const disputedDeals = deals.filter(d => d.status === 'disputed');
-  const activeDeals = deals.filter(d => ['pending_payment', 'paid', 'shipped'].includes(d.status));
-  const totalSpent = completedDeals.reduce((acc, d) => acc + d.amountGHS, 0);
+  const activeDeals = deals.filter(d => ['pending_payment', 'in_escrow'].includes(d.status));
+  const totalSpent = pastDeals.reduce((acc, d) => acc + d.amountGHS, 0);
 
   // Trust rating: based on completed vs disputed ratio
   const trustRating = deals.length > 0
-    ? Math.round(((completedDeals.length) / Math.max(deals.length, 1)) * 5 * 10) / 10
+    ? Math.round(((pastDeals.length) / Math.max(deals.length, 1)) * 5 * 10) / 10
     : 0;
 
   async function handleConfirmReceipt(dealId: string) {
@@ -235,6 +240,15 @@ export default function BuyerPage() {
     );
   }
 
+  // Display initial loading state while localStorage is checked
+  if (!initialCheckDone) {
+    return (
+      <div className="min-h-screen bg-slate-50 mesh-bg flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
   // Verified view
   if (loading) {
     return (
@@ -320,24 +334,30 @@ export default function BuyerPage() {
                       {deal.status === 'pending_payment' && (
                         <a 
                           href={`/pay/${deal.id}`}
-                          className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-sm text-center"
+                          className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-sm text-center border-2 border-emerald-100"
                         >
                           Complete Payment
                         </a>
                       )}
                       
-                      {deal.status === 'shipped' && (
+                      {deal.status === 'in_escrow' && !deal.shippedAt && (
+                        <div className="px-4 py-2 bg-emerald-700/50 text-emerald-50 font-bold rounded-xl text-sm text-center shadow-inner cursor-default">
+                          Awaiting Shipment
+                        </div>
+                      )}
+
+                      {deal.status === 'in_escrow' && deal.shippedAt && (
                         <>
                           <button 
                             onClick={() => handleConfirmReceipt(deal.id)}
-                            className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-sm w-full"
+                            className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-xl w-full"
                           >
                             Confirm Receipt
                           </button>
                         </>
                       )}
 
-                      {['paid', 'shipped'].includes(deal.status) && (
+                      {deal.status === 'in_escrow' && (
                         <a 
                           href={`/api/dispute-redirect?dealId=${deal.id}`}
                           className="px-4 py-2 bg-emerald-500/50 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors text-center backdrop-blur-sm"
@@ -372,15 +392,15 @@ export default function BuyerPage() {
             </h2>
           </div>
 
-          {completedDeals.length === 0 ? (
+          {pastDeals.length === 0 ? (
             <div className="text-center py-16">
               <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg font-bold text-slate-900 mb-1">No completed transactions yet</p>
-              <p className="text-sm text-slate-500">Your past SafeTrade purchases will appear here</p>
+              <p className="text-lg font-bold text-slate-900 mb-1">No past transactions yet</p>
+              <p className="text-sm text-slate-500">Only past or completed orders will appear down here.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {completedDeals.map((deal) => (
+              {pastDeals.map((deal) => (
                 <div key={deal.id} className="px-6 py-5 hover:bg-slate-50/50 transition-colors">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
