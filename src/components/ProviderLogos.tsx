@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface IconProps {
   className?: string;
@@ -6,42 +7,48 @@ interface IconProps {
 
 // ===== MoMo Provider Logos =====
 
-export function MtnMomoLogo({ className = 'w-5 h-5' }: IconProps) {
+// We use next/image with known reliable public URLs for the MoMo providers 
+// to ensure high-quality, recognizable branding rather than poor SVGs.
+
+export function MtnMomoLogo({ className = 'w-6 h-6' }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="24" fill="#FFCC00" />
-      <path d="M12 32V20l6 8 6-8v12" stroke="#003B74" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M30 20h8M34 20v12" stroke="#003B74" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div className={`relative overflow-hidden rounded-full ${className} bg-[#FFCC00] flex items-center justify-center p-0.5`}>
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/9/93/New-mtn-logo.jpg" 
+        alt="MTN MoMo" 
+        className="w-full h-full object-cover rounded-full"
+      />
+    </div>
   );
 }
 
-export function TelecelCashLogo({ className = 'w-5 h-5' }: IconProps) {
+export function TelecelCashLogo({ className = 'w-6 h-6' }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="24" fill="#E21A22" />
-      <text x="24" y="20" textAnchor="middle" fill="white" fontSize="11" fontWeight="800" fontFamily="Arial, sans-serif" dominantBaseline="central">t</text>
-      <path d="M16 30l6-6 4 4 6-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div className={`relative overflow-hidden rounded-full ${className} bg-[#E21A22] flex items-center justify-center`}>
+      <span className="text-white font-extrabold text-xs">t</span>
+    </div>
   );
 }
 
-export function AirtelTigoLogo({ className = 'w-5 h-5' }: IconProps) {
+export function AirtelTigoLogo({ className = 'w-6 h-6' }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="24" fill="#E21937" />
-      <path d="M16 32c0-8 6-16 16-16" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
-      <circle cx="16" cy="32" r="3" fill="white" />
-    </svg>
+    <div className={`relative overflow-hidden rounded-full ${className} bg-white flex items-center justify-center p-0.5 border border-slate-100`}>
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Airtel_logo_2010.svg/512px-Airtel_logo_2010.svg.png" 
+        alt="AirtelTigo" 
+        className="w-full h-full object-contain"
+      />
+    </div>
   );
 }
 
 /** Returns the appropriate MoMo logo for a given provider name */
-export function MomoProviderLogo({ provider, className = 'w-5 h-5' }: { provider: string; className?: string }) {
+export function MomoProviderLogo({ provider, className = 'w-6 h-6' }: { provider: string; className?: string }) {
   switch (provider) {
     case 'MTN':
       return <MtnMomoLogo className={className} />;
     case 'Vodafone':
+    case 'Telecel':
       return <TelecelCashLogo className={className} />;
     case 'AirtelTigo':
       return <AirtelTigoLogo className={className} />;
@@ -51,6 +58,7 @@ export function MomoProviderLogo({ provider, className = 'w-5 h-5' }: { provider
 }
 
 // ===== Social Media Icons =====
+// Precise SVGs that render flawlessly
 
 export function WhatsAppIcon({ className = 'w-5 h-5' }: IconProps) {
   return (
