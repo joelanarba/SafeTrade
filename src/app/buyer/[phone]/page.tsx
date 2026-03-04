@@ -17,6 +17,8 @@ import {
   Star,
   Package,
   Clock,
+  LogOut,
+  ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -116,12 +118,38 @@ export default function BuyerPage() {
 
   const completedDeals = deals.filter(d => d.status === 'completed');
   const disputedDeals = deals.filter(d => d.status === 'disputed');
+  const activeDeals = deals.filter(d => ['pending_payment', 'paid', 'shipped'].includes(d.status));
   const totalSpent = completedDeals.reduce((acc, d) => acc + d.amountGHS, 0);
 
   // Trust rating: based on completed vs disputed ratio
   const trustRating = deals.length > 0
     ? Math.round(((completedDeals.length) / Math.max(deals.length, 1)) * 5 * 10) / 10
     : 0;
+
+  async function handleConfirmReceipt(dealId: string) {
+    if (!confirm('Are you absolutely sure you want to confirm receipt? This releases the money to the seller and cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: `mock-token-from-dashboard-${dealId}`, dealId }) // We adapt the confirm API for direct access
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Receipt confirmed! Funds released.');
+        loadBuyerData(phone);
+      } else {
+        toast.error(data.error || 'Failed to confirm receipt');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error confirming receipt');
+    }
+  }
 
   if (otpStep === 'verify') {
     return (
@@ -212,9 +240,19 @@ export default function BuyerPage() {
     <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-16 sm:py-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Your SafeTrade History</h1>
-          <p className="text-slate-500 font-medium">{phone}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Buyer Portal</h1>
+            <p className="text-slate-500 font-medium flex items-center gap-2">
+              <Phone className="w-4 h-4" /> {phone}
+            </p>
+          </div>
+          <button 
+            onClick={() => window.location.href = '/track'}
+            className="text-sm font-bold text-slate-500 hover:text-slate-900 flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
 
         {/* Stats */}
@@ -242,6 +280,71 @@ export default function BuyerPage() {
           </div>
         </div>
 
+        {/* Active Orders */}
+        {activeDeals.length > 0 && (
+          <div className="bg-emerald-600 rounded-3xl shadow-lg overflow-hidden mb-8 text-white relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3"></div>
+            
+            <div className="px-6 py-5 border-b border-emerald-500/30 relative z-10">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Package className="w-5 h-5 text-emerald-200" />
+                Active Orders
+              </h2>
+            </div>
+            
+            <div className="divide-y divide-emerald-500/30 relative z-10">
+              {activeDeals.map((deal) => (
+                <div key={deal.id} className="px-6 py-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-lg truncate">{deal.itemName}</h3>
+                        <StatusBadge status={deal.status} />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-emerald-100">
+                        <span className="font-bold text-white">₵{deal.amountGHS.toFixed(2)}</span>
+                        <span className="w-1 h-1 bg-emerald-300 rounded-full" />
+                        <span>{deal.vendorName}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex sm:flex-col gap-2 shrink-0">
+                      {deal.status === 'pending_payment' && (
+                        <a 
+                          href={`/pay/${deal.id}`}
+                          className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-sm text-center"
+                        >
+                          Complete Payment
+                        </a>
+                      )}
+                      
+                      {deal.status === 'shipped' && (
+                        <>
+                          <button 
+                            onClick={() => handleConfirmReceipt(deal.id)}
+                            className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-sm w-full"
+                          >
+                            Confirm Receipt
+                          </button>
+                        </>
+                      )}
+
+                      {['paid', 'shipped'].includes(deal.status) && (
+                        <a 
+                          href={`/api/dispute-redirect?dealId=${deal.id}`}
+                          className="px-4 py-2 bg-emerald-500/50 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors text-center backdrop-blur-sm"
+                        >
+                          Issue / Dispute
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Member Since */}
         {buyer?.firstSeen && (
           <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-8 flex items-center gap-3">
@@ -261,15 +364,15 @@ export default function BuyerPage() {
             </h2>
           </div>
 
-          {deals.length === 0 ? (
+          {completedDeals.length === 0 ? (
             <div className="text-center py-16">
               <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg font-bold text-slate-900 mb-1">No transactions yet</p>
-              <p className="text-sm text-slate-500">Your SafeTrade purchases will appear here</p>
+              <p className="text-lg font-bold text-slate-900 mb-1">No completed transactions yet</p>
+              <p className="text-sm text-slate-500">Your past SafeTrade purchases will appear here</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {deals.map((deal) => (
+              {completedDeals.map((deal) => (
                 <div key={deal.id} className="px-6 py-5 hover:bg-slate-50/50 transition-colors">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -308,7 +411,7 @@ export default function BuyerPage() {
                     <div>
                       <h3 className="font-bold text-slate-900">{deal.itemName}</h3>
                       <p className="text-sm text-slate-500 mt-0.5">
-                        {deal.disputeCategory || deal.disputeReason || 'Dispute filed'}
+                        {deal.disputeReason || 'Dispute filed'}
                       </p>
                     </div>
                     <span className="text-sm font-bold text-slate-900">₵{deal.amountGHS.toFixed(2)}</span>

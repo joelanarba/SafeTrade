@@ -41,7 +41,10 @@ export default function Navbar() {
               </>
             ) : !loading ? (
               <>
-                <Link href="/login" className="text-slate-600 hover:text-emerald-600 text-sm font-bold transition-colors">
+                <Link href="/track" className="text-slate-600 hover:text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500 rounded-md px-2 py-1 text-sm font-bold transition-colors">
+                  Track Order
+                </Link>
+                <Link href="/login" className="text-slate-600 hover:text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500 rounded-md px-2 py-1 text-sm font-bold transition-colors">
                   Sign In
                 </Link>
                 <Link href="/login" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-soft hover-lift">
@@ -93,6 +96,13 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <Link
+                  href="/track"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-slate-700 hover:text-emerald-600 font-bold px-4 py-3 hover:bg-emerald-50 rounded-xl"
+                >
+                  Track Order
+                </Link>
                 <Link
                   href="/login"
                   onClick={() => setMenuOpen(false)}

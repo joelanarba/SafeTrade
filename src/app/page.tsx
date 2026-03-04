@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Lock, Users, Star, CheckCircle, ArrowRight, Check, Zap, Smartphone, ShoppingBag } from 'lucide-react';
+import { Shield, Lock, Users, Star, CheckCircle, ArrowRight, Check, Zap, Smartphone, ShoppingBag, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
 import { MtnMomoLogo, TelecelCashLogo, AirtelTigoLogo } from '@/components/ProviderLogos';
@@ -364,15 +364,23 @@ export default function Home() {
           <p className="text-[19px] text-slate-300 font-medium mb-12 max-w-2xl mx-auto">
             Join vendors across Ghana who refuse to lose sales because of trust issues. Buying from a vendor? Ask them to send you a SafeTrade link.
           </p>
-          <div className="flex flex-col items-center gap-4">
-            <Link
-              href="/login"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-10 py-4 rounded-xl text-[18px] font-bold transition-all shadow-emerald-500/20 shadow-lg hover-lift inline-flex items-center justify-center gap-2"
-            >
-              <Shield className="w-5 h-5" />
-              Create Your First SafeTrade Deal
-            </Link>
-          </div>
+          <div className="flex flex-col sm:flex-row gap-4 mb-10 mt-8 justify-center lg:justify-start">
+                <Link 
+                  href="/login"
+                  className="inline-flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white px-8 py-5 rounded-2xl font-extrabold text-lg transition-all shadow-xl shadow-slate-900/10 hover:shadow-2xl hover-lift outline-none focus:ring-4 focus:ring-slate-900/20"
+                >
+                  Create Secure Link
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+                
+                <Link 
+                  href="/track"
+                  className="inline-flex items-center justify-center gap-3 bg-white hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 px-8 py-5 rounded-2xl font-extrabold text-lg transition-all shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/20"
+                >
+                  <Package className="w-5 h-5" />
+                  Track Order
+                </Link>
+              </div>
         </div>
       </section>
 
