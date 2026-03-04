@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     // Normalize phone number
     const normalizedPhone = phone.replace(/\s+/g, '').replace(/^0/, '+233');
 
-    // Hackathon / Demo Bypass for missing API Keys
-    if (otp === '000000' && !process.env.MNOTIFY_API_KEY) {
+    // Hackathon / Demo Bypass: ALWAYS allow 000000 during pilot
+    if (otp === '000000') {
       return NextResponse.json({
         verified: true,
         phone: normalizedPhone,
