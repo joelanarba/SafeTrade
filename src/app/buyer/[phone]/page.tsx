@@ -17,7 +17,8 @@ import {
   Package,
   Clock,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -36,6 +37,10 @@ export default function BuyerPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+
+  // Modal State
+  const [confirmingDealId, setConfirmingDealId] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     if (otpCooldown > 0) {
@@ -139,16 +144,19 @@ export default function BuyerPage() {
     ? Math.round(((pastDeals.length) / Math.max(deals.length, 1)) * 5 * 10) / 10
     : 0;
 
-  async function handleConfirmReceipt(dealId: string) {
-    if (!confirm('Are you absolutely sure you want to confirm receipt? This releases the money to the seller and cannot be undone.')) {
-      return;
-    }
+  function handleConfirmReceipt(dealId: string) {
+    setConfirmingDealId(dealId);
+  }
+
+  async function executeConfirmReceipt() {
+    if (!confirmingDealId) return;
+    setIsConfirming(true);
 
     try {
       const res = await fetch('/api/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: `mock-token-from-dashboard-${dealId}`, dealId }) // We adapt the confirm API for direct access
+        body: JSON.stringify({ token: `mock-token-from-dashboard-${confirmingDealId}`, dealId: confirmingDealId }) 
       });
 
       const data = await res.json();
@@ -161,6 +169,9 @@ export default function BuyerPage() {
     } catch (err) {
       console.error(err);
       toast.error('Error confirming receipt');
+    } finally {
+      setIsConfirming(false);
+      setConfirmingDealId(null);
     }
   }
 
@@ -450,6 +461,45 @@ export default function BuyerPage() {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmingDealId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] p-6 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setConfirmingDealId(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 hover:bg-slate-100 rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col items-center text-center mt-2">
+              <div className="w-16 h-16 bg-emerald-100/50 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Confirm Receipt</h3>
+              <p className="text-slate-500 font-medium mb-8 text-sm leading-relaxed px-2">
+                Are you sure you want to confirm that you have received the item in good condition? This will permanently release the funds to the seller.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setConfirmingDealId(null)}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeConfirmReceipt}
+                  disabled={isConfirming}
+                  className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2"
+                >
+                  {isConfirming ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Yes, Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
