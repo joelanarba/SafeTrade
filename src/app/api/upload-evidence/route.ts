@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 // Ensure admin app is initialized
 function getAdminApp() {
@@ -56,21 +57,29 @@ export async function POST(request: NextRequest) {
     const fileName = `disputes/${dealId}_${Date.now()}_${file.name}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
+    // Generate a secure download token
+    const downloadToken = uuidv4();
+
     const fileRef = bucket.file(fileName);
     await fileRef.save(fileBuffer, {
       metadata: {
         contentType: file.type,
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken,
+        }
       },
     });
 
-    // Make the file publicly readable
-    await fileRef.makePublic();
-
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    // Format the URL the exact same way Firebase client SDK does
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Upload failed' }, 
+      { status: 500 }
+    );
   }
 }
+
