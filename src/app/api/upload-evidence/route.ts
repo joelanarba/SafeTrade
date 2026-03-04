@@ -17,15 +17,27 @@ function getAdminApp() {
         if (parsedKey.private_key) {
           parsedKey.private_key = parsedKey.private_key.replace(/\\n/g, '\n');
         }
+        let projectId = 'safetrade-africa';
+        if (parsedKey.project_id) {
+          projectId = parsedKey.project_id;
+        }
+
         return initializeApp({
           credential: cert(parsedKey),
-          storageBucket: 'safetrade-africa.firebasestorage.app',
+          storageBucket: `${projectId}.firebasestorage.app`,
+          projectId: projectId,
         });
       } catch {
-        return initializeApp({ storageBucket: 'safetrade-africa.firebasestorage.app' });
+        return initializeApp({ 
+          storageBucket: 'safetrade-africa.firebasestorage.app',
+          projectId: 'safetrade-africa'
+        });
       }
     } else {
-      return initializeApp({ storageBucket: 'safetrade-africa.firebasestorage.app' });
+      return initializeApp({ 
+        storageBucket: 'safetrade-africa.firebasestorage.app',
+        projectId: 'safetrade-africa'
+      });
     }
   }
   return getApps()[0];
