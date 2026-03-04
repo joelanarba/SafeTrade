@@ -16,6 +16,7 @@ import {
   Upload,
   Image as ImageIcon,
 } from 'lucide-react';
+import { MomoProviderLogo } from '@/components/ProviderLogos';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
@@ -296,17 +297,18 @@ function SettingsContent() {
                       key={provider}
                       type="button"
                       onClick={() => setMomoProvider(provider)}
-                      className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all border-2 ${
+                      className={`py-3.5 px-4 rounded-xl text-sm font-bold transition-all border-2 flex items-center justify-center gap-2 ${
                         momoProvider === provider
                           ? provider === 'MTN'
                             ? 'bg-yellow-50 border-yellow-400 text-yellow-800 shadow-sm'
                             : provider === 'Vodafone'
                             ? 'bg-red-50 border-red-400 text-red-800 shadow-sm'
-                            : 'bg-blue-50 border-blue-400 text-blue-800 shadow-sm'
+                            : 'bg-red-50 border-red-400 text-red-800 shadow-sm'
                           : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
                       }`}
                     >
-                      {provider}
+                      <MomoProviderLogo provider={provider} className="w-6 h-6" />
+                      {provider === 'Vodafone' ? 'Telecel' : provider}
                     </button>
                   ))}
                 </div>

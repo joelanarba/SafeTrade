@@ -785,9 +785,15 @@ export default function PayPage() {
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-emerald-100">
-                  <p className="text-xs font-bold text-slate-700 text-center">
-                    Works with MTN MoMo • Vodafone Cash • AirtelTigo Money • Visa/Mastercard
-                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-slate-700">
+                    <span className="inline-flex items-center gap-1"><span className="w-4 h-4 bg-[#FFCC00] rounded-full inline-block" /> MTN MoMo</span>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-4 h-4 bg-red-500 rounded-full inline-block" /> Telecel Cash</span>
+                    <span>•</span>
+                    <span className="inline-flex items-center gap-1"><span className="w-4 h-4 bg-red-600 rounded-full inline-block" /> AirtelTigo Money</span>
+                    <span>•</span>
+                    <span>Visa/Mastercard</span>
+                  </div>
                 </div>
               </div>
             )}

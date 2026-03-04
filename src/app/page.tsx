@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Shield, Lock, Users, Star, CheckCircle, ArrowRight, Check, Zap, Smartphone, ShoppingBag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BlockchainTrustSection, BnbLogo } from '@/components/BnbChainBadge';
+import { MtnMomoLogo, TelecelCashLogo, AirtelTigoLogo } from '@/components/ProviderLogos';
 import { getTotalDealsCount } from '@/lib/firestore';
 import { Logo } from '@/components/Logo';
 
@@ -331,15 +332,15 @@ export default function Home() {
           <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Works With</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FFCC00]/10 text-[#CC9900] border border-[#FFCC00]/20 rounded-full text-sm font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
+              <MtnMomoLogo className="w-6 h-6" />
               MTN MoMo
             </span>
             <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500/10 text-red-600 border border-red-500/20 rounded-full text-sm font-bold">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              Vodafone Cash
+              <TelecelCashLogo className="w-6 h-6" />
+              Telecel Cash
             </span>
-            <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-full text-sm font-bold">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500/10 text-red-700 border border-red-500/20 rounded-full text-sm font-bold">
+              <AirtelTigoLogo className="w-6 h-6" />
               AirtelTigo Money
             </span>
             <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900/5 text-slate-700 border border-slate-900/10 rounded-full text-sm font-bold">

@@ -8,6 +8,7 @@ import TrustScore from '@/components/TrustScore';
 import VendorBadge from '@/components/VendorBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
 import ShareLink from '@/components/ShareLink';
+import { WhatsAppIcon, InstagramIcon, XTwitterIcon, TikTokIcon, FacebookIcon, TelegramIcon } from '@/components/ProviderLogos';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
 import { auth } from '@/lib/firebase';
 import { Deal, DeliveryMethod, ESTIMATED_DELIVERY_OPTIONS } from '@/lib/types';
@@ -603,17 +604,18 @@ function DashboardContent() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {[
-              { name: 'WhatsApp', color: 'bg-[#25D366]/10 text-[#25D366] border-[#25D366]/20' },
-              { name: 'Instagram', color: 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-pink-600 border-pink-500/20' },
-              { name: 'X (Twitter)', color: 'bg-slate-900/5 text-slate-900 border-slate-900/10' },
-              { name: 'TikTok', color: 'bg-slate-900/5 text-slate-800 border-slate-900/10' },
-              { name: 'Facebook', color: 'bg-[#1877F2]/10 text-[#1877F2] border-[#1877F2]/20' },
-              { name: 'Telegram', color: 'bg-[#0088cc]/10 text-[#0088cc] border-[#0088cc]/20' },
+              { name: 'WhatsApp', color: 'bg-[#25D366]/10 text-[#25D366] border-[#25D366]/20', icon: <WhatsAppIcon className="w-4 h-4" /> },
+              { name: 'Instagram', color: 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-pink-600 border-pink-500/20', icon: <InstagramIcon className="w-4 h-4" /> },
+              { name: 'X (Twitter)', color: 'bg-slate-900/5 text-slate-900 border-slate-900/10', icon: <XTwitterIcon className="w-4 h-4" /> },
+              { name: 'TikTok', color: 'bg-slate-900/5 text-slate-800 border-slate-900/10', icon: <TikTokIcon className="w-4 h-4" /> },
+              { name: 'Facebook', color: 'bg-[#1877F2]/10 text-[#1877F2] border-[#1877F2]/20', icon: <FacebookIcon className="w-4 h-4" /> },
+              { name: 'Telegram', color: 'bg-[#0088cc]/10 text-[#0088cc] border-[#0088cc]/20', icon: <TelegramIcon className="w-4 h-4" /> },
             ].map((platform) => (
               <span
                 key={platform.name}
-                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border ${platform.color}`}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border ${platform.color}`}
               >
+                {platform.icon}
                 {platform.name}
               </span>
             ))}
