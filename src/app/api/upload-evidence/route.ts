@@ -1,47 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { getAdminDb } from '@/lib/firebase-admin';
 
-// Ensure admin app is initialized
-function getAdminApp() {
-  if (getApps().length === 0) {
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (serviceAccount) {
-      try {
-        let cleanKey = serviceAccount;
-        if (cleanKey.startsWith("'") && cleanKey.endsWith("'")) {
-          cleanKey = cleanKey.slice(1, -1);
-        }
-        const parsedKey = JSON.parse(cleanKey);
-        if (parsedKey.private_key) {
-          parsedKey.private_key = parsedKey.private_key.replace(/\\n/g, '\n');
-        }
-        let projectId = 'safetrade-africa';
-        if (parsedKey.project_id) {
-          projectId = parsedKey.project_id;
-        }
-
-        return initializeApp({
-          credential: cert(parsedKey),
-          storageBucket: `${projectId}.firebasestorage.app`,
-          projectId: projectId,
-        });
-      } catch {
-        return initializeApp({ 
-          storageBucket: 'safetrade-africa.firebasestorage.app',
-          projectId: 'safetrade-africa'
-        });
-      }
-    } else {
-      return initializeApp({ 
-        storageBucket: 'safetrade-africa.firebasestorage.app',
-        projectId: 'safetrade-africa'
-      });
-    }
-  }
-  return getApps()[0];
-}
+// The bucket name for Firebase Storage in GCS format
+// Firebase projects use either .appspot.com or .firebasestorage.app
+const BUCKET_NAME = 'safetrade-africa.firebasestorage.app';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,8 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
     }
 
-    const app = getAdminApp();
-    const bucket = getStorage(app).bucket();
+    // Trigger admin app initialization via existing firebase-admin.ts
+    getAdminDb();
+
+    // Now get storage from the already-initialized admin app, with explicit bucket name
+    const bucket = getStorage().bucket(BUCKET_NAME);
 
     const fileName = `disputes/${dealId}_${Date.now()}_${file.name}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
@@ -82,16 +49,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Format the URL the exact same way Firebase client SDK does
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+    // Format the URL the same way Firebase client SDK does
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Upload failed' }, 
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
