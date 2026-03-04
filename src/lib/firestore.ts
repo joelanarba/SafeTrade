@@ -161,15 +161,33 @@ export async function createVendor(
   vendorId: string,
   displayName: string,
   email: string,
-  photoURL: string
+  photoURL: string,
+  providedUsername?: string
 ): Promise<Vendor> {
-  // Generate a base username from displayName or use a standard prefix
-  let baseUsername = displayName 
-    ? displayName.toLowerCase().replace(/[^a-z0-9]/g, '') 
-    : 'vendor';
-    
+  // Generate a base username from displayName or use provided
+  let baseUsername = providedUsername
+    ? providedUsername.toLowerCase().replace(/[^a-z0-9]/g, '')
+    : displayName 
+      ? displayName.toLowerCase().replace(/[^a-z0-9]/g, '') 
+      : 'vendor';
+      
   if (baseUsername.length < 3) {
-    baseUsername = 'vendor' + Math.floor(Math.random() * 10000);
+    baseUsername += Math.floor(Math.random() * 10000);
+  }
+
+  // Ensure uniqueness
+  let finalUsername = baseUsername;
+  let isUnique = false;
+  let counter = 0;
+  
+  while (!isUnique && counter < 10) {
+    const existing = await getVendorByUsername(finalUsername);
+    if (!existing || existing.id === vendorId) {
+      isUnique = true;
+    } else {
+      counter++;
+      finalUsername = `${baseUsername}${Math.floor(Math.random() * 1000)}`;
+    }
   }
 
   const vendor: Vendor = {
@@ -186,7 +204,7 @@ export async function createVendor(
     createdAt: new Date().toISOString(),
     verified: false,
     photoURL: photoURL || '',
-    username: baseUsername.substring(0, 20),
+    username: finalUsername.substring(0, 20),
   };
 
   await setDoc(doc(db, 'vendors', vendorId), vendor, { merge: true });

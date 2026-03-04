@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Shield, Mail, Lock, User, Eye, EyeOff, Loader2, AtSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { loginWithEmail, signUpWithEmail, loginWithGoogle } = useAuth();
@@ -21,7 +22,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        await signUpWithEmail(email, password, displayName);
+        if (!username || username.length < 3) {
+          toast.error('Username must be at least 3 characters');
+          setLoading(false);
+          return;
+        }
+        await signUpWithEmail(email, password, displayName, username);
         toast.success('Account created! Welcome to SafeTrade.');
       } else {
         await loginWithEmail(email, password);
@@ -109,6 +115,24 @@ export default function LoginPage() {
                     className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
                   />
                 </div>
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Username</label>
+                <div className="relative">
+                  <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                    required
+                    placeholder="e.g. abenasfashion"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2 ml-1">Your public link: safetrade-africa.vercel.app/<b>{username || 'username'}</b></p>
               </div>
             )}
 

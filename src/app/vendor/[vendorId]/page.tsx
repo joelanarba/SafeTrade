@@ -37,10 +37,13 @@ export default function VendorProfilePage() {
 
   useEffect(() => {
     loadVendor();
-    if (typeof window !== 'undefined') {
-      setProfileUrl(window.location.href);
-    }
   }, [vendorId]);
+
+  useEffect(() => {
+    if (vendor) {
+      setProfileUrl(`https://safetrade-africa.vercel.app/${vendor.username || vendor.id}`);
+    }
+  }, [vendor]);
 
   async function loadVendor() {
     try {

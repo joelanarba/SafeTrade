@@ -85,9 +85,7 @@ export default function UsernameProfilePage() {
     year: 'numeric',
   });
 
-  const profileUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/${vendor.username || `vendor/${vendor.id}`}`
-    : `safetrade.app/${vendor.username || `vendor/${vendor.id}`}`;
+  const profileUrl = `https://safetrade-africa.vercel.app/${vendor.username || vendor.id}`;
 
   const handleCopyProfile = async () => {
     try {

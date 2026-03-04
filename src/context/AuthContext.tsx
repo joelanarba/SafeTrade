@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   vendor: Vendor | null;
   loading: boolean;
-  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string, username?: string) => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -57,10 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  async function signUpWithEmail(email: string, password: string, displayName: string) {
+  async function signUpWithEmail(email: string, password: string, displayName: string, username?: string) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName });
-    await createVendor(cred.user.uid, displayName, email, '');
+    await createVendor(cred.user.uid, displayName, email, '', username);
     await loadVendor(cred.user);
   }
 
