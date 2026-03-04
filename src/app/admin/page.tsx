@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
-import { getDisputedDeals, getVendor } from '@/lib/firestore';
+import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import { auth } from '@/lib/firebase';
 import {
@@ -75,7 +75,23 @@ function AdminContent() {
 
   async function loadDisputes() {
     try {
-      const d = await getDisputedDeals();
+      // Use server-side API (Admin SDK) to fetch disputes — bypasses Firestore security rules
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) {
+        console.error('No auth token available');
+        setLoading(false);
+        return;
+      }
+      const res = await fetch('/api/admin/disputes', {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        console.error('Failed to fetch disputes:', await res.text());
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      const d: Deal[] = data.disputes || [];
       setDisputes(d);
       // Load vendor data for each dispute
       const vendors: Record<string, Vendor> = {};
