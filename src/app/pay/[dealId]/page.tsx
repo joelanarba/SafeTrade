@@ -23,6 +23,8 @@ import {
   ExternalLink,
   HelpCircle,
   ChevronDown,
+  KeyRound,
+  MessageSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
@@ -43,6 +45,12 @@ declare global {
   }
 }
 
+function formatDeliveryTime(hours: number): string {
+  if (hours <= 48) return `${hours} hours`;
+  if (hours <= 120) return '3-5 days';
+  return '1-2 weeks';
+}
+
 export default function PayPage() {
   const params = useParams();
   const dealId = params.dealId as string;
@@ -54,10 +62,15 @@ export default function PayPage() {
   const [paid, setPaid] = useState(false);
   const [confirmationToken, setConfirmationToken] = useState<string | null>(null);
 
-  // Buyer form
+  // OTP verification state
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [otpStep, setOtpStep] = useState<'details' | 'otp' | 'verified'>('details');
+  const [otpCode, setOtpCode] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   // Web3 state
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'web3'>('momo');
@@ -69,6 +82,14 @@ export default function PayPage() {
   useEffect(() => {
     loadDeal();
   }, [dealId]);
+
+  // OTP cooldown timer
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCooldown]);
 
   async function loadDeal() {
     try {
@@ -85,9 +106,75 @@ export default function PayPage() {
     }
   }
 
+  async function handleSendOtp() {
+    if (!buyerName.trim() || !buyerPhone.trim()) {
+      toast.error('Please enter your name and phone number');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: buyerPhone, name: buyerName }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setOtpStep('otp');
+        setOtpCooldown(60);
+        toast.success('Verification code sent to your phone!');
+      } else {
+        toast.error(data.error || 'Failed to send OTP');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error sending verification code');
+    } finally {
+      setSendingOtp(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    if (!otpCode.trim() || otpCode.length !== 6) {
+      toast.error('Please enter the 6-digit code');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: buyerPhone, otp: otpCode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.verified) {
+        setOtpStep('verified');
+        toast.success('Phone number verified!');
+      } else {
+        toast.error(data.error || 'Invalid verification code');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error verifying code');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  }
+
   function handlePay() {
     if (!deal || !buyerName || !buyerPhone || !buyerEmail) {
       toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (otpStep !== 'verified') {
+      toast.error('Please verify your phone number first');
       return;
     }
 
@@ -169,6 +256,11 @@ export default function PayPage() {
       return;
     }
 
+    if (otpStep !== 'verified') {
+      toast.error('Please verify your phone number first');
+      return;
+    }
+
     if (!isConnected || !walletProvider) {
       open();
       return;
@@ -187,10 +279,8 @@ export default function PayPage() {
       const usdt = new Contract(usdtAddress, ERC20_ABI, signer);
       const escrow = new Contract(escrowAddress, contractABI, signer);
 
-      // Testing: 1-to-1 conversion for USDT (mocking exchange rate)
       const amountWei = parseUnits(deal.amountGHS.toString(), 18);
 
-      // Approve
       const allowance = await usdt.allowance(address, escrowAddress);
       if (allowance < amountWei) {
         toast.loading('Approving USDT...', { id: 'web3-appr' });
@@ -199,7 +289,6 @@ export default function PayPage() {
         toast.dismiss('web3-appr');
       }
 
-      // Lock Escrow
       toast.loading('Confirming payment on chain...', { id: 'web3-pay' });
       const vendorAddress = vendor?.walletAddress || fallbackVendor;
 
@@ -207,7 +296,6 @@ export default function PayPage() {
       const receipt = await tx.wait();
       toast.dismiss('web3-pay');
 
-      // Verify on backend
       const res = await fetch('/api/web3/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -234,6 +322,8 @@ export default function PayPage() {
       setPaying(false);
     }
   }
+
+  const estimatedHours = deal?.estimatedDeliveryHours || 72;
 
   if (loading) {
     return (
@@ -290,8 +380,16 @@ export default function PayPage() {
               <span className="text-slate-900 font-extrabold">{deal.itemName}</span>
             </div>
             <div className="flex justify-between items-center text-base">
-              <span className="text-slate-500 font-bold">Delivery Window</span>
-              <span className="text-emerald-700 font-black bg-emerald-100 px-3 py-1 rounded-full text-sm">72 hours</span>
+              <span className="text-slate-500 font-bold">Expected Delivery</span>
+              <span className="text-emerald-700 font-black bg-emerald-100 px-3 py-1 rounded-full text-sm">
+                within {formatDeliveryTime(estimatedHours)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-base">
+              <span className="text-slate-500 font-bold">Smart Release</span>
+              <span className="text-blue-700 font-bold bg-blue-50 px-3 py-1 rounded-full text-sm">
+                +48hr buffer
+              </span>
             </div>
             <div className="flex justify-between items-center text-base">
               <span className="text-slate-500 font-bold">Escrow</span>
@@ -334,18 +432,18 @@ export default function PayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-16 sm:py-24">
+    <div className="min-h-screen bg-slate-50 mesh-bg px-4 py-8 sm:py-12">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
 
       <div className="max-w-xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-10">
-          <BnbPoweredBadge className="mb-6" />
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Secure Payment</h1>
+        <div className="text-center mb-6 sm:mb-10">
+          <BnbPoweredBadge className="mb-4 sm:mb-6 mx-auto" />
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Secure Payment</h1>
         </div>
 
         {/* Deal Details Card */}
-        <div className="bg-white rounded-[2rem] p-8 sm:p-10 mb-8 shadow-soft border border-slate-100">
+        <div className="bg-white rounded-[2rem] p-6 sm:p-8 mb-6 shadow-soft border border-slate-100">
           <div className="flex items-start gap-5 mb-6">
             <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center flex-shrink-0">
               <Package className="w-8 h-8 text-emerald-600" />
@@ -363,6 +461,19 @@ export default function PayPage() {
                 <span className="text-2xl text-slate-400 mr-1">₵</span>
                 {deal.amountGHS.toFixed(2)}
               </span>
+            </div>
+          </div>
+
+          {/* Estimated Delivery Banner */}
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-900">Expected delivery: within {formatDeliveryTime(estimatedHours)}</p>
+              <p className="text-xs font-medium text-blue-700 mt-0.5">
+                If you don&apos;t confirm delivery or raise a dispute within 48 hours of the estimated delivery time, funds will be automatically released to the vendor.
+              </p>
             </div>
           </div>
 
@@ -393,140 +504,250 @@ export default function PayPage() {
           </div>
         </div>
 
-        {/* Buyer Form */}
-        <div className="bg-white rounded-[2rem] p-8 sm:p-10 mb-8 shadow-soft border border-slate-100">
-          <h3 className="text-xl font-extrabold text-slate-900 mb-6 tracking-tight">Your Details</h3>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={buyerName}
-                  onChange={(e) => setBuyerName(e.target.value)}
-                  required
-                  placeholder="e.g. Kwame Asante"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
-                />
-              </div>
+        {/* Buyer Verification — Two-Step OTP Flow */}
+        <div className="bg-white rounded-[2rem] p-6 sm:p-8 mb-6 shadow-soft border border-slate-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Verify Your Identity</h3>
             </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Phone Number</label>
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="tel"
-                  value={buyerPhone}
-                  onChange={(e) => setBuyerPhone(e.target.value)}
-                  required
-                  placeholder="e.g. 0241234567"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="email"
-                  value={buyerEmail}
-                  onChange={(e) => setBuyerEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Method Toggle */}
-        <div className="bg-slate-100 p-1.5 rounded-2xl flex mb-8">
-          <button
-            onClick={() => setPaymentMethod('momo')}
-            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
-              paymentMethod === 'momo'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Pay with MoMo/Card (GHS)
-          </button>
-          <button
-            onClick={() => setPaymentMethod('web3')}
-            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
-              paymentMethod === 'web3'
-                ? 'bg-white text-emerald-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Pay with USDT (Web3)
-          </button>
-        </div>
-
-        {/* Selected Pay Button */}
-        {paymentMethod === 'momo' ? (
-          <button
-            onClick={handlePay}
-            disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
-          >
-            {paying ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                Processing Securely...
-              </>
-            ) : (
-              <>
-                <Lock className="w-6 h-6" />
-                Pay ₵{deal.amountGHS.toFixed(2)} Securely
-              </>
+            {otpStep === 'verified' && (
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Verified
+              </span>
             )}
-          </button>
-        ) : (
-          <div className="space-y-4">
-            {!isConnected ? (
+          </div>
+
+          {otpStep === 'details' && (
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    required
+                    placeholder="e.g. Kwame Asante"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Phone Number</label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="tel"
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    required
+                    placeholder="e.g. 0241234567"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
+                  />
+                </div>
+              </div>
+
               <button
-                onClick={() => open()}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-md hover-lift flex items-center justify-center gap-3 tracking-tight"
+                onClick={handleSendOtp}
+                disabled={sendingOtp || !buyerName.trim() || !buyerPhone.trim()}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl font-bold text-base transition-all shadow-md hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Connect Wallet to Pay USDT
+                {sendingOtp ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending Code...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-5 h-5" />
+                    Send Verification Code via SMS
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {otpStep === 'otp' && (
+            <div className="space-y-5">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-emerald-900">Code sent to {buyerPhone}</p>
+                  <p className="text-xs text-emerald-700 font-medium mt-0.5">Enter the 6-digit code we sent to your phone</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Verification Code</label>
+                <div className="relative">
+                  <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    maxLength={6}
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all text-center text-2xl tracking-[0.3em]"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleVerifyOtp}
+                disabled={verifyingOtp || otpCode.length !== 6}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-bold text-base transition-all shadow-md hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {verifyingOtp ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Verify Code
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => { setOtpStep('details'); setOtpCode(''); }}
+                  className="text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  ← Change number
+                </button>
+                <button
+                  onClick={handleSendOtp}
+                  disabled={otpCooldown > 0 || sendingOtp}
+                  className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors disabled:text-slate-400 disabled:cursor-not-allowed"
+                >
+                  {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {otpStep === 'verified' && (
+            <div className="space-y-5">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-emerald-900">{buyerName}</p>
+                  <p className="text-sm text-emerald-700 font-medium">{buyerPhone} — Verified</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="email"
+                    value={buyerEmail}
+                    onChange={(e) => setBuyerEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-12 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all"
+                  />
+                </div>
+                <p className="text-xs text-slate-400 font-medium mt-2">We'll send your order confirmation and delivery link here</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Payment Method Toggle — only show when verified */}
+        {otpStep === 'verified' && (
+          <>
+            <div className="bg-slate-100 p-1.5 rounded-2xl flex mb-6">
+              <button
+                onClick={() => setPaymentMethod('momo')}
+                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+                  paymentMethod === 'momo'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Pay with MoMo/Card (GHS)
+              </button>
+              <button
+                onClick={() => setPaymentMethod('web3')}
+                className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+                  paymentMethod === 'web3'
+                    ? 'bg-white text-emerald-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Pay with USDT (Web3)
+              </button>
+            </div>
+
+            {/* Selected Pay Button */}
+            {paymentMethod === 'momo' ? (
+              <button
+                onClick={handlePay}
+                disabled={paying || !buyerEmail}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
+              >
+                {paying ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Processing Securely...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-6 h-6" />
+                    Pay ₵{deal.amountGHS.toFixed(2)} Securely
+                  </>
+                )}
               </button>
             ) : (
-              <>
-                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl">
-                  <span>Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
-                  <button onClick={() => open()} className="text-emerald-600 hover:underline">Change</button>
-                </div>
-                <button
-                  onClick={handleWeb3Pay}
-                  disabled={paying || !buyerName || !buyerPhone || !buyerEmail}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
-                >
-                  {paying ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Executing Contract...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-6 h-6" />
-                      Approve & Pay {(deal.amountGHS * 1).toFixed(2)} USDT
-                    </>
-                  )}
-                </button>
-              </>
+              <div className="space-y-4">
+                {!isConnected ? (
+                  <button
+                    onClick={() => open()}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-md hover-lift flex items-center justify-center gap-3 tracking-tight"
+                  >
+                    Connect Wallet to Pay USDT
+                  </button>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center text-sm font-semibold text-slate-500 bg-slate-100 p-4 rounded-xl">
+                      <span>Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                      <button onClick={() => open()} className="text-emerald-600 hover:underline">Change</button>
+                    </div>
+                    <button
+                      onClick={handleWeb3Pay}
+                      disabled={paying || !buyerEmail}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-extrabold text-xl transition-all shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)] hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
+                    >
+                      {paying ? (
+                        <>
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                          Executing Contract...
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-6 h-6" />
+                          Approve & Pay {(deal.amountGHS * 1).toFixed(2)} USDT
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {/* Why SafeTrade for MoMo? */}
-        {paymentMethod === 'momo' && (
+        {paymentMethod === 'momo' && otpStep === 'verified' && (
           <div className="mt-6">
             <button
               onClick={() => setShowWhySafeTrade(!showWhySafeTrade)}
@@ -542,7 +763,7 @@ export default function PayPage() {
                   <Shield className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-slate-900 text-sm">Your money is held securely</p>
-                    <p className="text-xs text-slate-600 mt-1">When you send MoMo directly, it's gone instantly. With SafeTrade, your money stays locked until you confirm you received your item.</p>
+                    <p className="text-xs text-slate-600 mt-1">When you send MoMo directly, it&apos;s gone instantly. With SafeTrade, your money stays locked until you confirm you received your item.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -555,8 +776,8 @@ export default function PayPage() {
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-900 text-sm">72-hour protection window</p>
-                    <p className="text-xs text-slate-600 mt-1">If the vendor doesn't deliver within 72 hours or sends the wrong item, our team steps in and refunds your money.</p>
+                    <p className="font-bold text-slate-900 text-sm">Smart Release Protection</p>
+                    <p className="text-xs text-slate-600 mt-1">Funds release automatically 48 hours after your estimated delivery window, unless a dispute is raised. If the vendor doesn&apos;t deliver, our team steps in.</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-emerald-100">
@@ -569,9 +790,8 @@ export default function PayPage() {
           </div>
         )}
 
-        {/* Trust Section */}
         {/* Trust Section with BNB branding */}
-        <div className="mt-10 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+        <div className="mt-8 bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-3 tracking-tight">
               <Shield className="w-5 h-5 text-emerald-600" />
@@ -585,7 +805,7 @@ export default function PayPage() {
                 <BnbLogo className="w-4 h-4" />
               </div>
               <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                Your money is held in a <strong className="text-slate-900">BNB Smart Chain smart contract</strong> — the vendor can't touch it until you confirm delivery.
+                Your money is held in a <strong className="text-slate-900">BNB Smart Chain smart contract</strong> — the vendor can&apos;t touch it until you confirm delivery.
               </p>
             </div>
             <div className="flex items-start gap-4">
@@ -593,7 +813,7 @@ export default function PayPage() {
                 <Clock className="w-4 h-4 text-blue-600" />
               </div>
               <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                72-hour delivery window — if you don't receive your item, raise a dispute effortlessly.
+                <strong className="text-slate-900">Smart Release Protection</strong> — funds auto-release 48 hours after the estimated delivery window, unless you raise a dispute.
               </p>
             </div>
             <div className="flex items-start gap-4">

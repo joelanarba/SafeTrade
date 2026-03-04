@@ -175,7 +175,7 @@ export default function VendorProfilePage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6">
             <div className="bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-100">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />

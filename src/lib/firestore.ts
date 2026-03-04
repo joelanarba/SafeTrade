@@ -11,9 +11,10 @@ import {
   limit,
   getCountFromServer,
   Timestamp,
+  increment,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Deal, Vendor, DeliveryMethod } from './types';
+import { Deal, Vendor, DeliveryMethod, Buyer } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 // ===== Deal Operations =====
@@ -26,7 +27,8 @@ export async function createDeal(
   description: string,
   amountGHS: number,
   deliveryMethod?: DeliveryMethod,
-  trackingNumber?: string
+  trackingNumber?: string,
+  estimatedDeliveryHours?: number
 ): Promise<Deal> {
   const dealId = uuidv4();
   const confirmationToken = uuidv4();
@@ -57,6 +59,7 @@ export async function createDeal(
     confirmationToken,
     deliveryMethod: deliveryMethod || 'personal',
     trackingNumber: trackingNumber || '',
+    estimatedDeliveryHours: estimatedDeliveryHours || 72,
   };
 
   await setDoc(doc(db, 'deals', dealId), deal);
@@ -98,6 +101,50 @@ export async function getTotalDealsCount(): Promise<number> {
   const coll = collection(db, 'deals');
   const snapshot = await getCountFromServer(coll);
   return snapshot.data().count;
+}
+
+// ===== Buyer Operations =====
+
+export async function getOrCreateBuyer(phone: string, name: string): Promise<Buyer> {
+  const buyerRef = doc(db, 'buyers', phone);
+  const buyerSnap = await getDoc(buyerRef);
+
+  if (buyerSnap.exists()) {
+    // Update lastSeen and name
+    await updateDoc(buyerRef, {
+      name,
+      lastSeen: new Date().toISOString(),
+    });
+    return { ...buyerSnap.data(), phone } as Buyer;
+  }
+
+  const buyer: Buyer = {
+    phone,
+    name,
+    totalPurchases: 0,
+    disputes: 0,
+    firstSeen: new Date().toISOString(),
+    lastSeen: new Date().toISOString(),
+  };
+
+  await setDoc(buyerRef, buyer);
+  return buyer;
+}
+
+export async function getBuyer(phone: string): Promise<Buyer | null> {
+  const buyerSnap = await getDoc(doc(db, 'buyers', phone));
+  if (!buyerSnap.exists()) return null;
+  return { ...buyerSnap.data(), phone } as Buyer;
+}
+
+export async function getBuyerDeals(phone: string): Promise<Deal[]> {
+  const q = query(
+    collection(db, 'deals'),
+    where('buyerPhone', '==', phone),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Deal));
 }
 
 // ===== Vendor Operations =====
@@ -161,3 +208,4 @@ export async function getDisputedDeals(): Promise<Deal[]> {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Deal));
 }
+

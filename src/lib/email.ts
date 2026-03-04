@@ -45,7 +45,7 @@ export async function sendPaymentConfirmation(
         <h2>Payment Confirmed!</h2>
         <p>Hi ${buyerName},</p>
         <p>Your payment of <strong>GHS ${amount.toFixed(2)}</strong> for <strong>${itemName}</strong> has been secured in escrow.</p>
-        <p>The vendor has been notified to fulfill your order. You have a <strong>72-hour delivery window</strong>.</p>
+        <p>The vendor has been notified to fulfill your order. <strong>Smart Release Protection</strong> keeps your funds locked until delivery is confirmed.</p>
         <p>When you receive your item, click the button below to confirm delivery:</p>
         <a href="${confirmUrl}" style="display: inline-block; background: #10B981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Confirm Delivery</a>
         <p style="color: #6b7280; font-size: 14px;">If you encounter any issues, use the link above to report a problem.</p>
@@ -74,7 +74,7 @@ export async function sendVendorNotification(
         <h2>New Order — Funds Secured! 🎉</h2>
         <p>Hi ${vendorName},</p>
         <p><strong>${buyerName}</strong> has paid <strong>GHS ${amount.toFixed(2)}</strong> for <strong>${itemName}</strong>.</p>
-        <p>The funds are now locked in escrow. Please fulfill this order within <strong>72 hours</strong>.</p>
+        <p>The funds are now locked in escrow. Please fulfill this order and mark it as shipped in your dashboard.</p>
         <p>Once the buyer confirms receipt, funds will be released to your MoMo number.</p>
         <a href="${APP_URL}/dashboard" style="display: inline-block; background: #10B981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Go to Dashboard</a>
       </div>

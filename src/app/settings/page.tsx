@@ -182,7 +182,7 @@ function SettingsContent() {
                 <label className="block text-sm font-bold text-slate-700 mb-2">
                   MoMo Provider
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {(['MTN', 'Vodafone', 'AirtelTigo'] as const).map((provider) => (
                     <button
                       key={provider}

@@ -1,14 +1,13 @@
 /**
  * SafeTrade Ghana — Firebase Cloud Functions
  *
- * These functions run separately from the Next.js app.
- * Deploy with: firebase deploy --only functions
+ * Smart Release Protection:
+ * - Auto-release fires at: shippedAt + estimatedDeliveryHours + 48 hours
+ * - If vendor never marks as shipped, auto-release never fires
+ * - If buyer raises a dispute, auto-release does not fire
+ * - Backward compat: deals without estimatedDeliveryHours default to 72hrs after shippedAt
  *
- * Required setup:
- *   1. npm install -g firebase-tools
- *   2. firebase login
- *   3. firebase init functions
- *   4. Copy this file to functions/index.js
+ * Deploy with: firebase deploy --only functions
  */
 
 const functions = require("firebase-functions");
@@ -18,16 +17,15 @@ admin.initializeApp();
 const db = admin.firestore();
 
 /**
- * Scheduled function: Auto-release escrows after 72 hours with no dispute.
+ * Scheduled function: Smart Release — auto-release escrows based on delivery window.
  * Runs every hour.
  */
 exports.autoReleaseEscrows = functions.pubsub
   .schedule("every 1 hours")
   .onRun(async (context) => {
-    console.log("[SYNC] Running auto-release check...");
+    console.log("[SYNC] Running smart auto-release check...");
 
     const now = new Date();
-    const cutoff = new Date(now.getTime() - 72 * 60 * 60 * 1000); // 72 hours ago
 
     try {
       const snapshot = await db
@@ -36,48 +34,84 @@ exports.autoReleaseEscrows = functions.pubsub
         .get();
 
       let released = 0;
+      let skipped = 0;
 
       for (const doc of snapshot.docs) {
         const deal = doc.data();
-        const createdAt = new Date(deal.createdAt);
 
-        if (createdAt < cutoff) {
-          // 72 hours have passed with no dispute — auto-confirm
-          console.log(`[TIME] Auto-releasing deal ${doc.id}: ${deal.itemName}`);
-
-          // Generate mock tx hash (replace with real escrow release)
-          const releaseTxHash = `0x${"auto" + doc.id.replace(/-/g, "").substring(0, 60)}`;
-
-          await doc.ref.update({
-            status: "completed",
-            releaseTxHash,
-            updatedAt: new Date().toISOString(),
-          });
-
-          // Update vendor stats
-          const vendorRef = db.collection("vendors").doc(deal.vendorId);
-          const vendorSnap = await vendorRef.get();
-
-          if (vendorSnap.exists) {
-            const vendor = vendorSnap.data();
-            const newSuccessful = (vendor.successfulTrades || 0) + 1;
-            const newTotal = (vendor.totalTrades || 0) + 1;
-            const newTrustScore =
-              Math.round((newSuccessful / newTotal) * 5 * 100) / 100;
-
-            await vendorRef.update({
-              successfulTrades: newSuccessful,
-              totalTrades: newTotal,
-              trustScore: newTrustScore,
-              verified: newSuccessful >= 10,
-            });
-          }
-
-          released++;
+        // RULE: If deal is disputed, skip entirely — auto-release must not fire
+        if (deal.status === "disputed") {
+          skipped++;
+          continue;
         }
+
+        // RULE: If vendor has not marked as shipped, skip — funds stay locked
+        if (!deal.shippedAt) {
+          skipped++;
+          continue;
+        }
+
+        // Calculate auto-release time: shippedAt + estimatedDeliveryHours + 48hrs buffer
+        const shippedAt = new Date(deal.shippedAt).getTime();
+        const estimatedHours = deal.estimatedDeliveryHours || 72; // backward compat
+        const bufferHours = 48; // non-negotiable
+        const autoReleaseTime = shippedAt + (estimatedHours + bufferHours) * 60 * 60 * 1000;
+
+        if (now.getTime() < autoReleaseTime) {
+          continue; // Not yet time
+        }
+
+        console.log(`[TIME] Auto-releasing deal ${doc.id}: ${deal.itemName}`);
+
+        // Generate mock tx hash (replace with real escrow release in production)
+        const releaseTxHash = `0x${"auto" + doc.id.replace(/-/g, "").substring(0, 60)}`;
+
+        await doc.ref.update({
+          status: "completed",
+          releaseTxHash,
+          updatedAt: new Date().toISOString(),
+          autoReleased: true,
+        });
+
+        // Update vendor stats
+        const vendorRef = db.collection("vendors").doc(deal.vendorId);
+        const vendorSnap = await vendorRef.get();
+
+        if (vendorSnap.exists) {
+          const vendor = vendorSnap.data();
+          const newSuccessful = (vendor.successfulTrades || 0) + 1;
+          const newTotal = (vendor.totalTrades || 0) + 1;
+          const newTrustScore =
+            Math.round((newSuccessful / newTotal) * 5 * 100) / 100;
+
+          await vendorRef.update({
+            successfulTrades: newSuccessful,
+            totalTrades: newTotal,
+            trustScore: newTrustScore,
+            verified: newSuccessful >= 10,
+          });
+        }
+
+        // Update buyer stats
+        if (deal.buyerPhone) {
+          try {
+            const buyerRef = db.collection("buyers").doc(deal.buyerPhone);
+            const buyerSnap = await buyerRef.get();
+            if (buyerSnap.exists) {
+              await buyerRef.update({
+                totalPurchases: (buyerSnap.data().totalPurchases || 0) + 1,
+                lastSeen: new Date().toISOString(),
+              });
+            }
+          } catch (err) {
+            console.error(`Buyer update failed for ${deal.buyerPhone}:`, err);
+          }
+        }
+
+        released++;
       }
 
-      console.log(`[SUCCESS] Auto-released ${released} deal(s)`);
+      console.log(`[SUCCESS] Auto-released ${released} deal(s), skipped ${skipped}`);
       return null;
     } catch (error) {
       console.error("[ERROR] Auto-release error:", error);
@@ -102,8 +136,20 @@ exports.onDealDisputed = functions.firestore
       console.log(`   Vendor: ${after.vendorName}`);
       console.log(`   Buyer: ${after.buyerName}`);
 
-      // In production, you could send push notifications here
-      // or trigger additional email alerts
+      // Update buyer dispute count
+      if (after.buyerPhone) {
+        try {
+          const buyerRef = db.collection("buyers").doc(after.buyerPhone);
+          const buyerSnap = await buyerRef.get();
+          if (buyerSnap.exists) {
+            await buyerRef.update({
+              disputes: (buyerSnap.data().disputes || 0) + 1,
+            });
+          }
+        } catch (err) {
+          console.error("Buyer dispute count update failed:", err);
+        }
+      }
     }
 
     return null;

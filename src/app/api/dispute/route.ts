@@ -30,14 +30,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Deal is not in escrow' }, { status: 400 });
     }
 
-    // Check 72-hour window
-    const createdAt = new Date(deal.createdAt);
-    const now = new Date();
-    const hoursElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-
-    if (hoursElapsed > 72) {
-      return NextResponse.json({ error: 'Dispute window has expired (72 hours)' }, { status: 400 });
-    }
+    // Smart Release: Disputes can be raised at any time before auto-release fires.
+    // Filing a dispute freezes the auto-release timer.
 
     // Build full reason text
     const fullReason = category 

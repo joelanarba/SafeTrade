@@ -24,6 +24,24 @@ export interface Deal {
   trackingNumber?: string;
   disputeCategory?: string;
   disputePhotos?: string[];
+  // Smart Release fields
+  estimatedDeliveryHours?: number;
+  shippedAt?: string;
+  autoReleaseAt?: string;
+  reminderSent?: boolean;
+  autoReleased?: boolean;
+  payoutReference?: string;
+  payoutStatus?: string;
+  payoutError?: string;
+}
+
+export interface Buyer {
+  phone: string;
+  name: string;
+  totalPurchases: number;
+  disputes: number;
+  firstSeen: string;
+  lastSeen: string;
 }
 
 export type DeliveryMethod = 'personal' | 'courier' | 'pickup';
@@ -36,6 +54,15 @@ export type DealStatus =
   | 'completed'
   | 'refunded'
   | 'cancelled';
+
+export const ESTIMATED_DELIVERY_OPTIONS = [
+  { label: '6 hours', value: 6 },
+  { label: '12 hours', value: 12 },
+  { label: '24 hours', value: 24 },
+  { label: '48 hours', value: 48 },
+  { label: '3-5 days', value: 120 },
+  { label: '1-2 weeks', value: 336 },
+];
 
 export interface Vendor {
   id: string;

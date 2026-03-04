@@ -169,7 +169,7 @@ export default function Home() {
             </div>
 
             {/* The Animated 5 Step List with Progress Line */}
-            <div className="relative ml-2 md:ml-6 pl-10 h-[300px]">
+            <div className="relative ml-2 md:ml-6 pl-10 h-auto min-h-[300px]">
               {/* Vertical Progress Line Track */}
               <div className="absolute left-[13px] top-6 bottom-6 w-[2px] bg-slate-200/80 rounded-full"></div>
               

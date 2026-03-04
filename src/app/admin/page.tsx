@@ -244,7 +244,7 @@ function AdminContent() {
                               <ImageIcon className="w-4 h-4 text-amber-600" />
                               Evidence Photos
                             </p>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {(deal.disputePhotos && deal.disputePhotos.length > 0 ? deal.disputePhotos : [deal.disputePhoto]).map((photo: string, i: number) => (
                                 photo && (
                                   <a

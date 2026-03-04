@@ -63,6 +63,37 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     });
 
+    // 4b. Create/update buyer profile
+    if (buyerPhone) {
+      try {
+        const normalizedPhone = buyerPhone.replace(/\s+/g, '').replace(/^0/, '+233');
+        const buyerRef = adminDb.collection('buyers').doc(normalizedPhone);
+        const buyerSnap = await buyerRef.get();
+
+        if (buyerSnap.exists) {
+          await buyerRef.update({
+            name: buyerName || buyerSnap.data()!.name,
+            totalPurchases: (buyerSnap.data()!.totalPurchases || 0) + 1,
+            lastSeen: new Date().toISOString(),
+          });
+        } else {
+          await buyerRef.set({
+            phone: normalizedPhone,
+            name: buyerName || 'Buyer',
+            totalPurchases: 1,
+            disputes: 0,
+            firstSeen: new Date().toISOString(),
+            lastSeen: new Date().toISOString(),
+          });
+        }
+
+        // Also update the deal with normalized phone
+        await dealRef.update({ buyerPhone: normalizedPhone });
+      } catch (buyerErr) {
+        console.error('Buyer profile update failed (non-critical):', buyerErr);
+      }
+    }
+
     // 5. Send transaction emails
     try {
       if (buyerEmail) {

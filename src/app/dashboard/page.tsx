@@ -9,7 +9,7 @@ import VendorBadge from '@/components/VendorBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
 import ShareLink from '@/components/ShareLink';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
-import { Deal, DeliveryMethod } from '@/lib/types';
+import { Deal, DeliveryMethod, ESTIMATED_DELIVERY_OPTIONS } from '@/lib/types';
 import {
   Plus,
   ExternalLink,
@@ -25,6 +25,8 @@ import {
   Trash2,
   Truck,
   Globe,
+  Send as SendIcon,
+  Timer,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,6 +51,7 @@ function DashboardContent() {
   const [editDesc, setEditDesc] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [shippingDealId, setShippingDealId] = useState<string | null>(null);
 
   const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; dealId: string; itemName: string } | null>(null);
 
@@ -61,6 +64,7 @@ function DashboardContent() {
   const [phone, setPhone] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('personal');
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [estimatedDelivery, setEstimatedDelivery] = useState<number>(24);
 
   useEffect(() => {
     if (user) loadDeals();
@@ -96,7 +100,8 @@ function DashboardContent() {
         description,
         amount,
         deliveryMethod,
-        deliveryMethod === 'courier' ? trackingNumber : ''
+        deliveryMethod === 'courier' ? trackingNumber : '',
+        estimatedDelivery
       );
       setDeals((prev) => [deal, ...prev]);
       setShowCreateModal(false);
@@ -106,6 +111,7 @@ function DashboardContent() {
       setPhone('');
       setDeliveryMethod('personal');
       setTrackingNumber('');
+      setEstimatedDelivery(24);
       toast.success('Deal created! Share the payment link with your buyer.');
     } catch (err) {
       console.error(err);
@@ -218,6 +224,36 @@ function DashboardContent() {
     }
   }
 
+  async function handleShipDeal(dealId: string) {
+    if (!user) return;
+    setShippingDealId(dealId);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/deals/${dealId}/ship`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success('Order marked as shipped!');
+        setDeals(deals.map(d => d.id === dealId ? {
+          ...d,
+          shippedAt: data.shippedAt,
+          autoReleaseAt: data.autoReleaseAt,
+        } : d));
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to mark as shipped');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error marking as shipped');
+    } finally {
+      setShippingDealId(null);
+    }
+  }
+
   const getPaymentUrl = (dealId: string) => {
     if (typeof window !== 'undefined') {
       return `${window.location.origin}/pay/${dealId}`;
@@ -242,7 +278,7 @@ function DashboardContent() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-24 sm:py-32">
+    <div className="min-h-screen bg-slate-50 px-4 py-10 sm:py-16">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
@@ -507,18 +543,41 @@ function DashboardContent() {
                           />
                         </>
                       )}
-                      {deal.status === 'in_escrow' && deal.confirmationToken && (
-                        <button
-                          onClick={() => {
-                            const url = `${window.location.origin}/confirm/${deal.confirmationToken}`;
-                            navigator.clipboard.writeText(url);
-                            toast.success('Confirmation link copied! Send it to your buyer.');
-                          }}
-                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-emerald-200 shadow-sm"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Copy Buyer Link
-                        </button>
+                      {deal.status === 'in_escrow' && (
+                        <>
+                          {!deal.shippedAt ? (
+                            <button
+                              onClick={() => handleShipDeal(deal.id)}
+                              disabled={shippingDealId === deal.id}
+                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-blue-200 shadow-sm disabled:opacity-50"
+                            >
+                              {shippingDealId === deal.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <SendIcon className="w-3.5 h-3.5" />
+                              )}
+                              <span className="hidden sm:inline">Mark Shipped</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-200">
+                              <Timer className="w-3.5 h-3.5" />
+                              Auto-release: {new Date(deal.autoReleaseAt || '').toLocaleDateString('en-GH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                          {deal.confirmationToken && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/confirm/${deal.confirmationToken}`;
+                                navigator.clipboard.writeText(url);
+                                toast.success('Confirmation link copied! Send it to your buyer.');
+                              }}
+                              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border border-emerald-200 shadow-sm"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              Copy Buyer Link
+                            </button>
+                          )}
+                        </>
                       )}
                       {(deal.status === 'cancelled') && (
                         <button
@@ -545,8 +604,8 @@ function DashboardContent() {
 
       {/* Create Deal Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 p-4 sm:p-0">
-          <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 sm:p-10 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-6 sm:p-10 pb-12 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowCreateModal(false)}
               className="absolute top-6 right-6 w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 transition-colors"
@@ -636,6 +695,22 @@ function DashboardContent() {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Estimated Delivery Time</label>
+                <div className="relative">
+                  <Timer className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <select
+                    value={estimatedDelivery}
+                    onChange={(e) => setEstimatedDelivery(Number(e.target.value))}
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl pl-10 pr-4 py-3.5 text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium transition-all appearance-none"
+                  >
+                    {ESTIMATED_DELIVERY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               {deliveryMethod === 'courier' && (
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Tracking Number (Optional)</label>
@@ -677,8 +752,8 @@ function DashboardContent() {
 
       {/* Edit Deal Modal */}
       {editingDeal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 p-4 sm:p-0">
-          <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 sm:p-10 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-6 sm:p-10 pb-12 relative shadow-2xl scale-100 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setEditingDeal(null)}
               className="absolute top-6 right-6 w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-500 transition-colors"
@@ -771,8 +846,8 @@ function DashboardContent() {
 
       {/* Confirmation Modal */}
       {confirmAction && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[2rem] w-full max-w-sm p-8 relative shadow-2xl">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 sm:p-8 pb-10 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="text-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 ${
                 confirmAction.type === 'delete' ? 'bg-red-100' : 'bg-amber-100'
