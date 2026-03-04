@@ -1,34 +1,37 @@
-const ARKESEL_API_KEY = process.env.ARKESEL_API_KEY || '';
-const SENDER_ID = 'SafeTrade';
+const MNOTIFY_API_KEY = process.env.MNOTIFY_API_KEY || 'VZPCg1Ih2pxfbgCCrZsl5QJl3';
+const SENDER_ID = 'mNotify'; // Default mNotify sender ID as per docs, or user can register a new one
 
 /**
- * Send an SMS via Arkesel API (Ghana)
+ * Send an SMS via mNotify API (Ghana)
  */
 export async function sendSMS(to: string, message: string): Promise<boolean> {
-  if (!ARKESEL_API_KEY) {
+  if (!MNOTIFY_API_KEY) {
     console.log(`[SMS Mock] To: ${to}, Message: ${message}`);
     return true;
   }
 
   try {
-    const res = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
+    const res = await fetch(`https://api.mnotify.com/api/sms/quick?key=${MNOTIFY_API_KEY}`, {
       method: 'POST',
       headers: {
-        'api-key': ARKESEL_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        recipient: [to],
         sender: SENDER_ID,
-        message,
-        recipients: [to],
+        message: message,
+        is_schedule: false,
+        schedule_date: ''
       }),
     });
 
     const data = await res.json();
-    console.log('[SMS] Arkesel response:', JSON.stringify(data));
-    return res.ok;
+    console.log('[SMS] mNotify response:', JSON.stringify(data));
+    
+    // mNotify returns status: "success" and code: "2000" on success
+    return data.status === 'success' && data.code === "2000";
   } catch (err) {
-    console.error('[SMS] Arkesel send failed:', err);
+    console.error('[SMS] mNotify send failed:', err);
     return false;
   }
 }

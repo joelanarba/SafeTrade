@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[OTP] Code sent to ${normalizedPhone}: ${code}`);
 
-    const hasApiKey = !!process.env.ARKESEL_API_KEY;
+    const hasApiKey = !!process.env.MNOTIFY_API_KEY;
 
     return NextResponse.json({
       message: hasApiKey 

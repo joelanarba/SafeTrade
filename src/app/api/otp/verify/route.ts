@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const normalizedPhone = phone.replace(/\s+/g, '').replace(/^0/, '+233');
 
     // Hackathon / Demo Bypass for missing API Keys
-    if (otp === '000000' && !process.env.ARKESEL_API_KEY) {
+    if (otp === '000000' && !process.env.MNOTIFY_API_KEY) {
       return NextResponse.json({
         verified: true,
         phone: normalizedPhone,
