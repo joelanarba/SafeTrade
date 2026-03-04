@@ -19,15 +19,15 @@ export async function GET(request: NextRequest) {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     
     if (!decodedToken.email || !ADMIN_EMAILS.includes(decodedToken.email.toLowerCase())) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden', adminEmails: ADMIN_EMAILS, userEmail: decodedToken.email }, { status: 403 });
     }
 
     // Fetch disputed deals using Admin SDK (bypasses security rules)
+    // Using only where() without orderBy() to avoid composite index requirement
     const db = getAdminDb();
     const snapshot = await db
       .collection('deals')
       .where('status', '==', 'disputed')
-      .orderBy('createdAt', 'desc')
       .get();
 
     const disputes = snapshot.docs.map((doc) => ({
@@ -35,9 +35,17 @@ export async function GET(request: NextRequest) {
       ...doc.data(),
     }));
 
+    // Sort in memory instead of requiring a Firestore composite index
+    disputes.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt as string).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt as string).getTime() : 0;
+      return dateB - dateA;
+    });
+
     return NextResponse.json({ disputes });
   } catch (error) {
     console.error('Admin disputes error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: 'Internal server error', details: message }, { status: 500 });
   }
 }
