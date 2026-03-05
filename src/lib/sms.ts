@@ -1,5 +1,5 @@
 const MNOTIFY_API_KEY = process.env.MNOTIFY_API_KEY || 'VZPCg1Ih2pxfbgCCrZsl5QJl3';
-const SENDER_ID = 'mNotify'; // Default mNotify sender ID as per docs, or user can register a new one
+const SENDER_ID = 'SafeTrade'; // Approved mNotify sender ID
 
 /**
  * Send an SMS via mNotify API (Ghana)
