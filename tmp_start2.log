@@ -1,0 +1,15 @@
+
+> safetrade-temp@0.1.0 start
+> next start -p 4014
+
+▲ Next.js 16.1.6
+- Local:         http://localhost:4014
+- Network:       http://10.155.190.112:4014
+
+✓ Starting...
+✓ Ready in 1788ms
+Please use proxy object
+⨯ TypeError: c is not iterable
+    at I (C:\dev\Projects\SafeTrade\.next\server\chunks\ssr\_cc34fb11._.js:1:7087) {
+  digest: '2682853146'
+}

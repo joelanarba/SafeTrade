@@ -1,14 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Shield, Menu, X, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Shield, Menu, X, LogOut, LayoutDashboard, User, Phone } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 
 export default function Navbar() {
   const { user, vendor, logout, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  const [mounted, setMounted] = useState(false);
+  const [buyerPhone, setBuyerPhone] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const authPhone = localStorage.getItem('buyer_auth');
+      if (authPhone) {
+        setBuyerPhone(authPhone);
+      }
+    }
+  }, []);
+
+  const handleBuyerLogout = () => {
+    localStorage.removeItem('buyer_auth');
+    setBuyerPhone(null);
+    window.location.href = '/';
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-slate-200 shadow-sm transition-all duration-300">
@@ -22,7 +41,7 @@ export default function Navbar() {
 
           {/* Desktop Right Actions */}
           <div className="hidden md:flex items-center gap-6">
-            {!loading && user ? (
+            {!loading && mounted && user ? (
               <>
                 <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-bold transition-colors text-sm px-4 py-2.5 rounded-xl hover:bg-emerald-50">
                   <LayoutDashboard className="w-4 h-4" />
@@ -39,7 +58,18 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
-            ) : !loading ? (
+             ) : !loading && mounted && buyerPhone ? (
+               <>
+                <Link href={`/buyer/${encodeURIComponent(buyerPhone)}`} className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 font-bold transition-colors text-sm px-4 py-2.5 rounded-xl hover:bg-emerald-50">
+                  <Phone className="w-4 h-4" />
+                  Buyer Portal
+                </Link>
+                <button onClick={handleBuyerLogout} className="flex items-center gap-2 text-slate-500 hover:text-red-600 font-bold transition-colors text-sm px-4 py-2.5 rounded-xl hover:bg-red-50">
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+               </>
+            ) : !loading && mounted ? (
               <>
                 <Link href="/track" className="text-slate-600 hover:text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500 rounded-md px-2 py-1 text-sm font-bold transition-colors">
                   Track Order
@@ -94,6 +124,27 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
+            ) : buyerPhone ? (
+               <>
+                <Link
+                  href={`/buyer/${encodeURIComponent(buyerPhone)}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 text-slate-700 hover:text-emerald-600 font-bold px-4 py-4 rounded-xl hover:bg-emerald-50"
+                >
+                  <Phone className="w-5 h-5" />
+                  Buyer Portal
+                </Link>
+                <button
+                  onClick={() => {
+                    handleBuyerLogout();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 text-slate-500 hover:text-red-600 font-bold px-4 py-4 rounded-xl hover:bg-red-50 w-full text-left"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+               </>
             ) : (
               <>
                 <Link
@@ -125,3 +176,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

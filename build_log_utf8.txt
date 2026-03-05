@@ -1,0 +1,189 @@
+﻿Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String 
+   ) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./node_modules/@web3modal/base/dist/esm/adapters/evm/
+ethers/utils/defaultConfig.js:2:1
+Module not found: Can't resolve 
+'@coinbase/wallet-sdk'
+[0m [90m 1 |[39m [36mimport[39m 
+[32m'@web3modal/polyfills'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m 
+{ [33mCoinbaseWalletSDK[39m } [36mfrom[39m 
+[32m'@coinbase/wallet-sdk'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m [36mexport[39m [36mfunction[39m 
+defaultConfig(options) {
+ [90m 4 |[39m     [36mconst[39m defaultAuth 
+[33m=[39m {
+ [90m 5 |[39m         email[33m:[39m 
+[36mtrue[39m[33m,[39m[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/utils/defaultConfig.js [Client Component 
+Browser]
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/index.js [Client Component Browser]
+    ./node_modules/@web3modal/ethers/dist/esm/exports
+/react.js [Client Component Browser]
+    ./src/app/pay/[dealId]/page.tsx [Client 
+Component Browser]
+    ./src/app/pay/[dealId]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/utils/defaultConfig.js [Client Component 
+SSR]
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/index.js [Client Component SSR]
+    ./node_modules/@web3modal/ethers/dist/esm/exports
+/react.js [Client Component SSR]
+    ./src/app/pay/[dealId]/page.tsx [Client 
+Component SSR]
+    ./src/app/pay/[dealId]/page.tsx [Server 
+Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./node_modules/@web3modal/base/dist/esm/adapters/evm/
+ethers/client.js:3:1
+Module not found: Can't resolve 
+'@walletconnect/ethereum-provider'
+[0m [90m 1 |[39m [36mimport[39m { 
+[33mConstantsUtil[39m[33m,[39m 
+[33mPresetsUtil[39m[33m,[39m 
+[33mHelpersUtil[39m } [36mfrom[39m 
+[32m'@web3modal/scaffold-utils'[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { 
+[33mConstantsUtil[39m [36mas[39m 
+[33mCommonConstantsUtil[39m } [36mfrom[39m 
+[32m'@web3modal/common'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m 
+[33mEthereumProvider[39m[33m,[39m { 
+[33mOPTIONAL_METHODS[39m } [36mfrom[39m [32m'@wa
+lletconnect/ethereum-provider'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { 
+getChainsFromAccounts } [36mfrom[39m 
+[32m'@walletconnect/utils'[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { 
+[33mConstantsUtil[39m [36mas[39m 
+[33mCommonConstants[39m } [36mfrom[39m 
+[32m'@web3modal/common'[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { 
+formatEther[33m,[39m 
+[33mJsonRpcProvider[39m[33m,[39m 
+[33mInfuraProvider[39m[33m,[39m getAddress 
+[36mas[39m getOriginalAddress[33m,[39m 
+parseUnits[33m,[39m formatUnits[33m,[39m 
+[33mJsonRpcSigner[39m[33m,[39m 
+[33mBrowserProvider[39m[33m,[39m 
+[33mContract[39m[33m,[39m hexlify[33m,[39m 
+toUtf8Bytes[33m,[39m isHexString } [36mfrom[39m 
+[32m'ethers'[39m[33m;[39m[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/client.js [Client Component Browser]
+    ./node_modules/@web3modal/ethers/dist/esm/exports
+/react.js [Client Component Browser]
+    ./src/app/pay/[dealId]/page.tsx [Client 
+Component Browser]
+    ./src/app/pay/[dealId]/page.tsx [Server 
+Component]
+
+  Client Component SSR:
+    ./node_modules/@web3modal/base/dist/esm/adapters/
+evm/ethers/client.js [Client Component SSR]
+    ./node_modules/@web3modal/ethers/dist/esm/exports
+/react.js [Client Component SSR]
+    ./src/app/pay/[dealId]/page.tsx [Client 
+Component SSR]
+    ./src/app/pay/[dealId]/page.tsx [Server 
+Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at ./node_modules/ (web3modal/base/dist/esm/adapt
+ers/evm/ethers/utils/defaultConfig.js:2:1)
+    at <unknown> 
+(https://nextjs.org/docs/messages/module-not-found)
+    at ./node_modules/ (web3modal/base/dist/esm/adapt
+ers/evm/ethers/client.js:3:1)
+    at <unknown> 
+(https://nextjs.org/docs/messages/module-not-found)
