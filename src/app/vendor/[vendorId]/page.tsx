@@ -89,7 +89,7 @@ export default function VendorProfilePage() {
 
   const handleCopyProfile = async () => {
     try {
-      await navigator.clipboard.writeText(`safetrade.app/vendor/${vendorId}`);
+      await navigator.clipboard.writeText(profileUrl);
       setCopiedProfile(true);
       setTimeout(() => setCopiedProfile(false), 2000);
     } catch (e) {
@@ -98,12 +98,12 @@ export default function VendorProfilePage() {
   };
 
   const handleShareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Check out my SafeTrade profile: safetrade.app/vendor/${vendorId}`)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Check out my SafeTrade profile: ${profileUrl}`)}`, '_blank');
   };
 
   const handleShareIG = async () => {
     try {
-      const caption = `I'm a verified SafeTrade seller. Check my trust score before you buy.\n\nsafetrade.app/vendor/${vendorId}`;
+      const caption = `I'm a verified SafeTrade seller. Check my trust score before you buy.\n\n${profileUrl}`;
       await navigator.clipboard.writeText(caption);
       setCopiedIg(true);
       setTimeout(() => setCopiedIg(false), 2000);

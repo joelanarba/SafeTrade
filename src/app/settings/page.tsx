@@ -236,8 +236,8 @@ function SettingsContent() {
                   Custom Username
                 </label>
                 <div className="flex items-center mt-1">
-                  <span className="inline-flex items-center px-4 rounded-l-xl border-2 border-r-0 border-slate-100 bg-slate-50 text-slate-500 font-medium text-sm py-3.5 h-full">
-                    safetrade.app/
+                  <span className="inline-flex items-center px-4 rounded-l-xl border-2 border-r-0 border-slate-100 bg-slate-50 text-slate-500 font-medium text-xs py-3.5 h-full whitespace-nowrap">
+                    safetrade-africa.vercel.app/
                   </span>
                   <input
                     type="text"

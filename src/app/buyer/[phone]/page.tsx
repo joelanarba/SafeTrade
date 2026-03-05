@@ -39,7 +39,7 @@ export default function BuyerPage() {
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Modal State
-  const [confirmingDealId, setConfirmingDealId] = useState<string | null>(null);
+  const [confirmingDeal, setConfirmingDeal] = useState<{ id: string, token: string } | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
@@ -144,19 +144,19 @@ export default function BuyerPage() {
     ? Math.round(((pastDeals.length) / Math.max(deals.length, 1)) * 5 * 10) / 10
     : 0;
 
-  function handleConfirmReceipt(dealId: string) {
-    setConfirmingDealId(dealId);
+  function handleConfirmReceipt(dealId: string, token: string) {
+    setConfirmingDeal(({ id: dealId, token }));
   }
 
   async function executeConfirmReceipt() {
-    if (!confirmingDealId) return;
+    if (!confirmingDeal) return;
     setIsConfirming(true);
 
     try {
       const res = await fetch('/api/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: `mock-token-from-dashboard-${confirmingDealId}`, dealId: confirmingDealId }) 
+        body: JSON.stringify({ confirmationToken: confirmingDeal.token, dealId: confirmingDeal.id }) 
       });
 
       const data = await res.json();
@@ -171,7 +171,7 @@ export default function BuyerPage() {
       toast.error('Error confirming receipt');
     } finally {
       setIsConfirming(false);
-      setConfirmingDealId(null);
+      setConfirmingDeal(null);
     }
   }
 
@@ -360,7 +360,7 @@ export default function BuyerPage() {
                       {deal.status === 'in_escrow' && deal.shippedAt && (
                         <>
                           <button 
-                            onClick={() => handleConfirmReceipt(deal.id)}
+                            onClick={() => handleConfirmReceipt(deal.id, deal.confirmationToken)}
                             className="px-4 py-2 bg-white text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-50 transition-colors shadow-xl w-full"
                           >
                             Confirm Receipt
@@ -370,7 +370,7 @@ export default function BuyerPage() {
 
                       {deal.status === 'in_escrow' && (
                         <a 
-                          href={`/api/dispute-redirect?dealId=${deal.id}`}
+                          href={`/confirm/${deal.confirmationToken}?dispute=true`}
                           className="px-4 py-2 bg-emerald-500/50 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-colors text-center backdrop-blur-sm"
                         >
                           Issue / Dispute
@@ -463,11 +463,11 @@ export default function BuyerPage() {
       </div>
 
       {/* Confirmation Modal */}
-      {confirmingDealId && (
+      {confirmingDeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[2rem] p-6 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button
-              onClick={() => setConfirmingDealId(null)}
+              onClick={() => setConfirmingDeal(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 hover:bg-slate-100 rounded-full"
             >
               <X className="w-5 h-5" />
@@ -482,7 +482,7 @@ export default function BuyerPage() {
               </p>
               <div className="flex gap-3 w-full">
                 <button
-                  onClick={() => setConfirmingDealId(null)}
+                  onClick={() => setConfirmingDeal(null)}
                   disabled={isConfirming}
                   className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50"
                 >
