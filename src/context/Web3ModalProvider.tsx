@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 
 // Get your projectId at https://cloud.walletconnect.com
 // We'll use a public test project ID if env var isn't set, but you should set yours
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'e895c1c4afbf2bd64fb3ce4083a213e4';
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '0426532f2d6dfdbd59613b13f92ed950';
 
 const bnbTestnet = {
   chainId: 97,
