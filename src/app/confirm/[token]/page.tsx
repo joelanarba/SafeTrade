@@ -72,6 +72,12 @@ export default function ConfirmPage() {
   ];
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('dispute') === 'true') {
+        setShowDispute(true);
+      }
+    }
     loadDeal();
   }, [token]);
 
