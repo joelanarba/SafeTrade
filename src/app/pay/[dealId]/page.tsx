@@ -10,6 +10,7 @@ import { Deal, Vendor } from '@/lib/types';
 import TrustScore from '@/components/TrustScore';
 import VendorBadge from '@/components/VendorBadge';
 import { BnbPoweredBadge, BnbPoweredBlock, BnbLogo } from '@/components/BnbChainBadge';
+import BscScanLink from '@/components/BscScanLink';
 import {
   Shield,
   Lock,
@@ -274,26 +275,19 @@ function PayPageContent() {
       const signer = await provider.getSigner();
 
       const escrowAddress = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!;
-      const usdtAddress = process.env.NEXT_PUBLIC_MOCK_USDT_ADDRESS!;
       const fallbackVendor = process.env.NEXT_PUBLIC_ESCROW_VENDOR_FALLBACK_ADDRESS!;
 
-      const usdt = new Contract(usdtAddress, ERC20_ABI, signer);
       const escrow = new Contract(escrowAddress, contractABI, signer);
 
-      const amountWei = parseUnits(deal.amountGHS.toString(), 18);
-
-      const allowance = await usdt.allowance(address, escrowAddress);
-      if (allowance < amountWei) {
-        toast.loading('Approving USDT...', { id: 'web3-appr' });
-        const txApprove = await usdt.approve(escrowAddress, amountWei);
-        await txApprove.wait();
-        toast.dismiss('web3-appr');
-      }
+      // Convert GHS amount to a symbolic BNB wei amount (GHS / 10000 as BNB)
+      const symbolicBnb = (deal.amountGHS / 10000).toFixed(18);
+      const amountWei = parseUnits(symbolicBnb, 18);
 
       toast.loading('Confirming payment on chain...', { id: 'web3-pay' });
       const vendorAddress = vendor?.walletAddress || fallbackVendor;
 
-      const tx = await escrow.createEscrow(deal.id, vendorAddress, amountWei);
+      // The deployed contract requires msg.value == amount
+      const tx = await escrow.createEscrow(deal.id, vendorAddress, amountWei, { value: amountWei });
       const receipt = await tx.wait();
       toast.dismiss('web3-pay');
 
@@ -416,16 +410,7 @@ function PayPageContent() {
           )}
 
           {deal.escrowTxHash && (
-            <a
-              href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-5 py-3 rounded-xl text-sm font-bold transition-all w-full justify-center"
-            >
-              <BnbLogo className="w-4 h-4" />
-              View Escrow Transaction on BscScan
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <BscScanLink txHash={deal.escrowTxHash} label="View Escrow Transaction on BscScan" className="inline-flex items-center gap-2.5 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-5 py-3 rounded-xl text-sm font-bold transition-all w-full justify-center disabled:opacity-70" />
           )}
         </div>
       </div>

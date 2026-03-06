@@ -6,6 +6,7 @@ import { getDealByConfirmationToken, getBuyer } from '@/lib/firestore';
 import { Deal, Buyer } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
+import BscScanLink from '@/components/BscScanLink';
 import {
   CheckCircle,
   AlertTriangle,
@@ -262,28 +263,12 @@ export default function ConfirmPage() {
           )}
 
           {deal.releaseTxHash && (
-            <a
-              href={`https://testnet.bscscan.com/tx/${deal.releaseTxHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-6 py-3.5 rounded-xl font-bold transition-all text-sm"
-            >
-              <BnbLogo className="w-5 h-5" />
-              View Release Transaction on BscScan
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            <BscScanLink txHash={deal.releaseTxHash} label="View Release Transaction on BscScan" />
           )}
           {deal.escrowTxHash && !deal.releaseTxHash && (
-            <a
-              href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 bg-[#FEF9E7] hover:bg-[#FDF0C8] text-[#C99400] border border-[#F3BA2F]/30 px-6 py-3.5 rounded-xl font-bold transition-all text-sm mt-3"
-            >
-              <BnbLogo className="w-5 h-5" />
-              View Escrow Transaction on BscScan
-              <ExternalLink className="w-4 h-4" />
-            </a>
+            <div className="mt-3">
+              <BscScanLink txHash={deal.escrowTxHash} label="View Escrow Transaction on BscScan" />
+            </div>
           )}
 
           <a

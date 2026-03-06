@@ -4,6 +4,7 @@ import { useEffect, useState, Fragment } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import BscScanLink from '@/components/BscScanLink';
 import { getVendor } from '@/lib/firestore';
 import { Deal, Vendor } from '@/lib/types';
 import { auth } from '@/lib/firebase';
@@ -365,9 +366,12 @@ function AdminContent() {
                                 {deal.disputeReason || 'No reason provided'}
                               </p>
                               {deal.escrowTxHash && (
-                                <a href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 font-bold mt-0.5">
-                                  Verify Tx <ExternalLink className="w-3 h-3" />
-                                </a>
+                                <BscScanLink
+                                  txHash={deal.escrowTxHash}
+                                  label="Verify Tx"
+                                  variant="inline"
+                                  className="inline-flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 font-bold mt-0.5 cursor-pointer"
+                                />
                               )}
                             </div>
                           </div>

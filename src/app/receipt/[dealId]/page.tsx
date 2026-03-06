@@ -8,6 +8,7 @@ import { Deal, Vendor } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import TrustScore from '@/components/TrustScore';
 import { BnbLogo, BnbPoweredBadge } from '@/components/BnbChainBadge';
+import BscScanLink from '@/components/BscScanLink';
 import {
   Shield,
   CheckCircle,
@@ -317,17 +318,12 @@ export default function ReceiptPage() {
                       <Lock className="w-3.5 h-3.5 text-[#C99400]" />
                       <span className="text-xs font-bold text-[#C99400] uppercase tracking-wider">Escrow Lock</span>
                     </div>
-                    <a
-                      href={`${BSCSCAN_BASE}/tx/${deal.escrowTxHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-[#C99400] transition-colors"
-                    >
-                      <code className="text-xs bg-slate-100 group-hover:bg-[#FEF9E7] px-2 py-1 rounded-lg transition-colors font-mono">
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-slate-100 px-2 py-1 rounded-lg font-mono text-slate-700">
                         {truncateHash(deal.escrowTxHash)}
                       </code>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                      <BscScanLink txHash={deal.escrowTxHash} label="" variant="inline" />
+                    </div>
                   </div>
                 )}
 
@@ -340,17 +336,12 @@ export default function ReceiptPage() {
                         {isRefunded ? 'Refund Transaction' : 'Fund Release'}
                       </span>
                     </div>
-                    <a
-                      href={`${BSCSCAN_BASE}/tx/${deal.releaseTxHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-[#C99400] transition-colors"
-                    >
-                      <code className="text-xs bg-slate-100 group-hover:bg-[#FEF9E7] px-2 py-1 rounded-lg transition-colors font-mono">
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-slate-100 px-2 py-1 rounded-lg font-mono text-slate-700">
                         {truncateHash(deal.releaseTxHash)}
                       </code>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                      <BscScanLink txHash={deal.releaseTxHash} label="" variant="inline" />
+                    </div>
                   </div>
                 )}
 

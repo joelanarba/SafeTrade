@@ -7,7 +7,9 @@ import StatusBadge from '@/components/StatusBadge';
 import TrustScore from '@/components/TrustScore';
 import VendorBadge from '@/components/VendorBadge';
 import { BnbLogo } from '@/components/BnbChainBadge';
+import BscScanLink from '@/components/BscScanLink';
 import ShareLink from '@/components/ShareLink';
+import { Logo } from '@/components/Logo';
 import { WhatsAppIcon, InstagramIcon, XTwitterIcon, TikTokIcon, FacebookIcon, TelegramIcon } from '@/components/ProviderLogos';
 import { createDeal, getVendorDeals } from '@/lib/firestore';
 import { auth } from '@/lib/firebase';
@@ -17,7 +19,6 @@ import {
   LogOut,
   LayoutDashboard,
   List,
-  Shield,
   Menu,
   ExternalLink,
   Package,
@@ -349,7 +350,7 @@ function DashboardContent() {
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-40">
         <h2 className="text-xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
-          <Shield className="w-5 h-5 text-emerald-600" />
+          <Logo variant="icon" className="w-7 h-7" />
           SafeTrade
         </h2>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 bg-slate-50 rounded-lg">
@@ -364,7 +365,7 @@ function DashboardContent() {
       `}>
         <div className="p-6 hidden md:block">
           <h2 className="text-2xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
-            <Shield className="w-6 h-6 text-emerald-600" />
+            <Logo variant="icon" className="w-8 h-8" />
             SafeTrade
           </h2>
         </div>
@@ -443,9 +444,9 @@ function DashboardContent() {
       <main className="flex-1 w-full bg-slate-50/50 min-h-screen">
         <div className="max-w-6xl mx-auto p-4 sm:p-8 lg:p-12 pb-24">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-8 sm:mb-10">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
               Welcome, {vendor?.displayName || 'Vendor'}
               {vendor && (
                 <VendorBadge 
@@ -455,11 +456,11 @@ function DashboardContent() {
                 />
               )}
             </h1>
-            <p className="text-slate-500 text-base mt-2 font-medium">Manage your protected deals and track payouts.</p>
+            <p className="text-slate-500 text-sm sm:text-base mt-1.5 sm:mt-2 font-medium">Manage your protected deals and track payouts.</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="group flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl text-base font-bold transition-all shadow-md hover-lift"
+            className="group flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-md hover-lift w-full sm:w-auto flex-shrink-0"
           >
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             Create New Deal
@@ -627,8 +628,8 @@ function DashboardContent() {
 
         {/* Deals List */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
-            <h2 className="text-xl font-bold text-slate-900">Recent Transactions</h2>
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 bg-slate-50/50">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Recent Transactions</h2>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
@@ -674,7 +675,9 @@ function DashboardContent() {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-bold">
@@ -701,15 +704,12 @@ function DashboardContent() {
                           <div>
                             <p className="text-sm font-bold text-slate-900">{deal.itemName}</p>
                             {deal.escrowTxHash && (
-                              <a
-                                href={`https://testnet.bscscan.com/tx/${deal.escrowTxHash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[10px] text-[#C99400] hover:text-[#A67C00] hover:underline font-bold mt-0.5"
-                              >
-                                <BnbLogo className="w-3 h-3" />
-                                Tx Hash
-                              </a>
+                              <BscScanLink
+                                txHash={deal.escrowTxHash}
+                                label="Tx Hash"
+                                variant="inline"
+                                className="inline-flex items-center gap-1 text-[10px] text-[#C99400] hover:text-[#A67C00] hover:underline font-bold mt-0.5 cursor-pointer"
+                              />
                             )}
                           </div>
                         </div>
@@ -816,6 +816,127 @@ function DashboardContent() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card Layout */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {filteredDeals.map((deal) => (
+                <div key={deal.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-start gap-3 mb-3">
+                    {deal.itemImage ? (
+                      <img src={deal.itemImage} alt={deal.itemName} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-slate-200" />
+                    ) : (
+                      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Package className="w-6 h-6 text-slate-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{deal.itemName}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm font-bold text-emerald-600">₵{deal.amountGHS.toFixed(2)}</span>
+                        <span className="text-slate-300">·</span>
+                        <StatusBadge status={deal.status} />
+                      </div>
+                      {deal.escrowTxHash && (
+                        <BscScanLink
+                          txHash={deal.escrowTxHash}
+                          label="Tx Hash"
+                          variant="inline"
+                          className="inline-flex items-center gap-1 text-[10px] text-[#C99400] hover:text-[#A67C00] hover:underline font-bold mt-1 cursor-pointer"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-3 pl-[60px]">
+                    <span>{deal.buyerName || 'No buyer yet'}</span>
+                    <span>{new Date(deal.createdAt).toLocaleDateString('en-GH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pl-[60px] flex-wrap">
+                    {deal.status === 'pending_payment' && (
+                      <>
+                        <button
+                          onClick={() => openEditModal(deal)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit Deal"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmAction({ type: 'cancel', dealId: deal.id, itemName: deal.itemName })}
+                          disabled={cancellingDealId === deal.id}
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Cancel Deal"
+                        >
+                          {cancellingDealId === deal.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => setConfirmAction({ type: 'delete', dealId: deal.id, itemName: deal.itemName })}
+                          disabled={deletingDealId === deal.id}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Delete Deal"
+                        >
+                          {deletingDealId === deal.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                        <ShareLink url={getPaymentUrl(deal.id)} title={`SafeTrade: ${deal.itemName}`} text="Pay securely with SafeTrade" />
+                      </>
+                    )}
+                    {deal.status === 'in_escrow' && (
+                      <>
+                        {!deal.shippedAt ? (
+                          <button
+                            onClick={() => handleShipDeal(deal.id)}
+                            disabled={shippingDealId === deal.id}
+                            className="p-2 text-blue-600 hover:bg-blue-50 bg-blue-50/50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Mark as Shipped"
+                          >
+                            {shippingDealId === deal.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendIcon className="w-4 h-4" />}
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-200" title="Auto-release time">
+                            <Timer className="w-3.5 h-3.5" />
+                            {new Date(deal.autoReleaseAt || '').toLocaleDateString('en-GH', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                        {deal.confirmationToken && (
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/confirm/${deal.confirmationToken}`;
+                              navigator.clipboard.writeText(url);
+                              toast.success('Confirmation link copied!');
+                            }}
+                            className="p-2 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/50 rounded-lg transition-colors"
+                            title="Copy buyer link"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {(deal.status === 'cancelled') && (
+                      <button
+                        onClick={() => setConfirmAction({ type: 'delete', dealId: deal.id, itemName: deal.itemName })}
+                        disabled={deletingDealId === deal.id}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Delete Deal"
+                      >
+                        {deletingDealId === deal.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      </button>
+                    )}
+                    {(deal.status === 'completed' || deal.status === 'refunded') && (
+                      <a
+                        href={`/receipt/${deal.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/50 rounded-lg transition-colors"
+                        title="View Receipt"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </div>
       </div>
