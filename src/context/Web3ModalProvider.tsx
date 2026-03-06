@@ -1,10 +1,8 @@
 'use client';
 
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
-// Get your projectId at https://cloud.walletconnect.com
-// We'll use a public test project ID if env var isn't set, but you should set yours
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '0426532f2d6dfdbd59613b13f92ed950';
 
 const bnbTestnet = {
@@ -29,13 +27,28 @@ const ethersConfig = defaultConfig({
   enableCoinbase: false,
 });
 
-createWeb3Modal({
-  ethersConfig,
-  chains: [bnbTestnet],
-  projectId,
-  enableAnalytics: false,
-});
+let web3ModalInitialized = false;
+
+if (typeof window !== 'undefined' && !web3ModalInitialized) {
+  createWeb3Modal({
+    ethersConfig,
+    chains: [bnbTestnet],
+    projectId,
+    enableAnalytics: false,
+  });
+  web3ModalInitialized = true;
+}
 
 export function Web3ModalProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; // Prevent SSR hydration mismatch
+  }
+
   return <>{children}</>;
 }
