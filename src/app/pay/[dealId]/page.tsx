@@ -29,7 +29,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
+import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import { BrowserProvider, Contract, parseUnits } from 'ethers';
 import contractABI from '@/lib/contract-abi.json';
 
@@ -77,9 +77,9 @@ function PayPageContent() {
   // Web3 state
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'web3'>('momo');
   const [showWhySafeTrade, setShowWhySafeTrade] = useState(false);
-  const { open } = useWeb3Modal();
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider('eip155');
 
   useEffect(() => {
     loadDeal();
@@ -271,7 +271,8 @@ function PayPageContent() {
     setPaying(true);
 
     try {
-      const provider = new BrowserProvider(walletProvider);
+      // @reown/appkit returns walletProvider typed as {}, so we cast it to standard Eip1193 provider expected by ethers
+      const provider = new BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
 
       const escrowAddress = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!;

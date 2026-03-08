@@ -1,42 +1,44 @@
 'use client';
 
-import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
+import { createAppKit } from '@reown/appkit/react';
+import { EthersAdapter } from '@reown/appkit-adapter-ethers';
 import { ReactNode, useEffect, useState } from 'react';
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '0426532f2d6dfdbd59613b13f92ed950';
 
 const bnbTestnet = {
-  chainId: 97,
+  id: 97,
   name: 'BNB Smart Chain Testnet',
-  currency: 'tBNB',
-  explorerUrl: 'https://testnet.bscscan.com',
-  rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545'
-};
+  nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://data-seed-prebsc-1-s1.binance.org:8545'] },
+  },
+  blockExplorers: {
+    default: { name: 'BscScan Testnet', url: 'https://testnet.bscscan.com' },
+  },
+  testnet: true,
+} as const;
 
 const metadata = {
   name: 'SafeTrade Ghana',
-  description: 'SafeTrade Ghana — The Trust Layer for Africa’s Social Commerce Economy',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://safetrade-africa.vercel.app', 
-  icons: ['https://avatars.githubusercontent.com/u/37784886']
+  description: 'SafeTrade Ghana \u2014 The Trust Layer for Africa\u2019s Social Commerce Economy',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://safetrade-africa.vercel.app',
+  icons: ['https://avatars.githubusercontent.com/u/37784886'],
 };
 
-const ethersConfig = defaultConfig({
-  metadata,
-  enableEIP6963: true,
-  enableInjected: true,
-  enableCoinbase: false,
-});
+let appKitInitialized = false;
 
-let web3ModalInitialized = false;
-
-if (typeof window !== 'undefined' && !web3ModalInitialized) {
-  createWeb3Modal({
-    ethersConfig,
-    chains: [bnbTestnet],
+if (typeof window !== 'undefined' && !appKitInitialized) {
+  createAppKit({
+    adapters: [new EthersAdapter()],
+    networks: [bnbTestnet],
     projectId,
-    enableAnalytics: false,
+    metadata,
+    features: {
+      analytics: false,
+    },
   });
-  web3ModalInitialized = true;
+  appKitInitialized = true;
 }
 
 export function Web3ModalProvider({ children }: { children: ReactNode }) {
@@ -46,9 +48,7 @@ export function Web3ModalProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null; // Prevent SSR hydration mismatch
-  }
+  if (!mounted) return null;
 
   return <>{children}</>;
 }
